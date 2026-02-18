@@ -1,5 +1,4 @@
-
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Product, Category } from '../types';
 import { CATEGORIES } from '../constants';
 import ProductCard from './ProductCard';
@@ -13,208 +12,175 @@ interface ProductListProps {
 
 const ProductList: React.FC<ProductListProps> = ({ products, addToCart, selectedCategory, onSelectCategory }) => {
   const catalogRef = useRef<HTMLDivElement>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 32 });
 
-  const scrollToCatalog = () => {
-    catalogRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev.seconds > 0) {
+          return { ...prev, seconds: prev.seconds - 1 };
+        } else if (prev.minutes > 0) {
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        } else if (prev.hours > 0) {
+          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        }
+        return prev;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const filteredProducts = products.filter(p => 
+    (selectedCategory === 'All' || p.cat === selectedCategory) &&
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const flashDealProducts = products.slice(0, 10);
+  const categoryData = [
+    { name: 'Smartphones', icon: '📱', count: products.filter(p => p.cat === 'Smartphones').length },
+    { name: 'Laptops', icon: '💻', count: products.filter(p => p.cat === 'Laptops').length },
+    { name: 'Headphones', icon: '🎧', count: products.filter(p => p.cat === 'Headphones').length },
+    { name: 'Accessories', icon: '🎒', count: products.filter(p => p.cat === 'Accessories').length },
+    { name: 'Cameras', icon: '📷', count: products.filter(p => p.cat === 'Cameras').length },
+    { name: 'Smart TVs', icon: '📺', count: products.filter(p => p.cat === 'Smart TVs').length },
+    { name: 'Gaming', icon: '🎮', count: products.filter(p => p.cat === 'Gaming').length },
+    { name: 'Smart Home', icon: '🏠', count: products.filter(p => p.cat === 'Smart Home').length },
+  ];
 
   return (
-    <div className="space-y-12 animate-fadeIn">
-      {/* Catalog Header & Filters - MOVED TO TOP */}
-      <div ref={catalogRef} className="space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-3xl font-black text-gray-900 tracking-tight">Product Catalog</h2>
-              <p className="text-gray-500">Premium electronics curated for excellence</p>
-            </div>
-          </div>
-          
-          <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar">
-            <button
-              onClick={() => onSelectCategory('All')}
-              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2 ${
-                selectedCategory === 'All' 
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
-                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-100'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-              </svg>
-              All Products
-            </button>
-            {CATEGORIES.map(cat => {
-              const categoryIcons: Record<string, JSX.Element> = {
-                'Smartphones': (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                ),
-                'Laptops': (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17H7a2 2 0 00-2 2v2a2 2 0 002 2h10a2 2 0 002-2v-2a2 2 0 00-2-2h-2m-4-4l2-4m0 0l2 4m-2-4v4" />
-                  </svg>
-                ),
-                'Headphones': (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                  </svg>
-                ),
-                'Accessories': (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                  </svg>
-                ),
-                'Cameras': (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  </svg>
-                ),
-                'Smart TVs': (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17H7a2 2 0 00-2 2v2a2 2 0 002 2h10a2 2 0 002-2v-2a2 2 0 00-2-2h-2m-4-4l2-4m0 0l2 4m-2-4v4" />
-                  </svg>
-                ),
-                'Smart Home': (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-4a1 1 0 011-1h2a1 1 0 011 1v4h3a1 1 0 001-1v-10" />
-                  </svg>
-                ),
-                'Gaming': (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                )
-              };
-
-              return (
-                <button
-                  key={cat}
-                  onClick={() => onSelectCategory(cat)}
-                  className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2 ${
-                    selectedCategory === cat 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
-                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-100'
-                  }`}
-                >
-                  {categoryIcons[cat]}
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {products.length === 0 ? (
-          <div className="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-gray-100">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="space-y-6">
+      {/* Search Bar */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-200 py-4">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex gap-2">
+            <div className="flex-1 relative">
+              <svg className="w-5 h-5 absolute left-3 top-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
+              <input
+                type="text"
+                placeholder="Search for products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
             </div>
-            <h3 className="text-2xl font-black text-gray-700">No items found</h3>
-            <p className="text-gray-400">Try adjusting your filters or search terms</p>
+            <button className="bg-red-500 text-white px-8 py-2 rounded-lg font-bold hover:bg-red-600">
+              Search
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Flash Deals Section */}
+      <section className="bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">⚡</span>
+            <div>
+              <h2 className="text-3xl font-black">Flash Deals</h2>
+              <p className="text-red-100">Limited time offers ending soon</p>
+            </div>
+          </div>
+          <div className="flex gap-2 text-center">
+            <div className="bg-white bg-opacity-20 rounded px-3 py-2">
+              <div className="text-2xl font-black">{String(timeLeft.hours).padStart(2, '0')}</div>
+              <div className="text-xs uppercase">Hours</div>
+            </div>
+            <div className="text-2xl font-black">:</div>
+            <div className="bg-white bg-opacity-20 rounded px-3 py-2">
+              <div className="text-2xl font-black">{String(timeLeft.minutes).padStart(2, '0')}</div>
+              <div className="text-xs uppercase">Min</div>
+            </div>
+            <div className="text-2xl font-black">:</div>
+            <div className="bg-white bg-opacity-20 rounded px-3 py-2">
+              <div className="text-2xl font-black">{String(timeLeft.seconds).padStart(2, '0')}</div>
+              <div className="text-xs uppercase">Sec</div>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {flashDealProducts.map(product => (
+            <div key={product.id} className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => addToCart(product)}>
+              <div className="relative">
+                <img src={product.img} alt={product.name} className="w-full h-32 object-cover" />
+                <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                  -{Math.round(((product.price - product.originalPrice) / product.originalPrice) * 100)}%
+                </div>
+              </div>
+              <div className="p-3">
+                <p className="text-gray-900 font-bold text-sm line-clamp-2">{product.name}</p>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-red-600 font-black text-lg">${product.price}</span>
+                  <span className="text-gray-400 line-through text-xs">${product.originalPrice}</span>
+                </div>
+                <div className="flex items-center gap-1 mt-2">
+                  <span className="text-yellow-500">★</span>
+                  <span className="text-gray-700 text-xs">{product.rating} ({product.reviews})</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Category Grid */}
+      <section className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+        {categoryData.map((cat, idx) => (
+          <button
+            key={idx}
+            onClick={() => onSelectCategory(cat.name as Category)}
+            className={`p-3 rounded-lg text-center hover:shadow-md transition-all ${
+              selectedCategory === cat.name
+                ? 'bg-red-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <div className="text-2xl mb-1">{cat.icon}</div>
+            <p className="text-xs font-bold line-clamp-1">{cat.name}</p>
+            <p className="text-xs text-gray-500">{cat.count}</p>
+          </button>
+        ))}
+      </section>
+
+      {/* Main Catalog */}
+      <div ref={catalogRef} className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-black text-gray-900">
+            {selectedCategory === 'All' ? 'All Products' : selectedCategory}
+          </h2>
+          <select className="border border-gray-300 rounded-lg px-4 py-2 font-bold">
+            <option>Newest</option>
+            <option>Best Selling</option>
+            <option>Price: Low to High</option>
+            <option>Price: High to Low</option>
+            <option>Top Rated</option>
+          </select>
+        </div>
+
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-24 bg-gray-50 rounded-lg">
+            <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+            </svg>
+            <h3 className="text-2xl font-black text-gray-700 mb-2">No products found</h3>
+            <p className="text-gray-500 mb-6">Try adjusting your search or filters</p>
             <button 
-              onClick={() => { onSelectCategory('All'); }} 
-              className="mt-6 text-blue-600 font-black hover:underline"
+              onClick={() => { onSelectCategory('All'); setSearchTerm(''); }}
+              className="bg-red-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-red-600"
             >
-              Clear all filters
+              Clear Filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-12">
-            {products.map(product => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {filteredProducts.map(product => (
               <ProductCard key={product.id} product={product} addToCart={addToCart} />
             ))}
           </div>
         )}
       </div>
-
-      {/* Modern Hero Section */}
-      <section className="relative h-[500px] md:h-[600px] rounded-[40px] overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent z-10" />
-        <img 
-          src="https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=2000" 
-          alt="Tech Hero Banner" 
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
-        />
-        <div className="relative z-20 h-full flex flex-col justify-center px-8 md:px-20 max-w-4xl">
-          <span className="text-blue-500 font-black tracking-widest uppercase mb-4 animate-slideDown">Premium Tech</span>
-          <h1 className="text-5xl md:text-6xl font-black text-white leading-tight mb-6">
-            Latest Electronics
-          </h1>
-          <p className="text-gray-300 text-lg md:text-xl mb-10 max-w-xl leading-relaxed">
-            Discover premium smartphones, laptops, and audio gear from global leaders.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <button 
-              onClick={scrollToCatalog}
-              className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-blue-500/20 flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              Shop Now
-            </button>
-            <button 
-              onClick={scrollToCatalog}
-              className="bg-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-indigo-500/20 flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Explore Deals
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Products Section */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-yellow-100 rounded-lg">
-            <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Featured Products</h2>
-            <p className="text-gray-500">Handpicked bestsellers you'll love</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {products.slice(0, 4).map(product => (
-            <ProductCard key={product.id} product={product} addToCart={addToCart} />
-          ))}
-        </div>
-      </section>
-
-      {/* Explore Deals Section */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-red-100 rounded-lg">
-            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Explore Deals</h2>
-            <p className="text-gray-500">Limited time offers and discounts</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {products.slice(4, 8).map(product => (
-            <ProductCard key={product.id} product={product} addToCart={addToCart} />
-          ))}
-        </div>
-      </section>
-
     </div>
   );
 };
