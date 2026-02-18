@@ -25,11 +25,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Explicitly defining the redirect helps Supabase route back to your app correctly
-          redirectTo: window.location.origin,
+          // Use Supabase's callback URL for proper OAuth handling
+          redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             access_type: 'offline',
-            prompt: 'select_account',
+            prompt: 'consent',
           },
         },
       });
@@ -37,7 +37,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
       // Note: The browser will redirect. The session handling is done in App.tsx.
     } catch (err: any) {
       console.error("Auth error:", err);
-      setError(err.message || 'Google authentication failed. Check your Google Cloud Console settings.');
+      setError('Google sign-in unavailable. Please ensure the callback URL is added to your Google OAuth app settings: ' + `${window.location.origin}/auth/callback`);
       setLoading(false);
     }
   };
@@ -107,26 +107,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-gray-950/90 backdrop-blur-2xl" onClick={onClose} />
       
-      <div className={`relative bg-white rounded-[40px] w-full max-w-md shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] animate-scaleIn border border-white/10 overflow-hidden`}>
+      <div className={`relative bg-white rounded-[32px] w-full max-w-sm shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] animate-scaleIn border border-white/10 overflow-hidden max-h-[90vh] overflow-y-auto`}>
         {/* Header Tabs */}
-        <div className="flex bg-gray-100 p-1.5 m-6 rounded-[24px]">
+        <div className="flex bg-gray-100 p-1 m-4 rounded-[20px]">
           <button 
             onClick={() => { setAuthType('customer'); setError(null); }}
-            className={`flex-1 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${authType === 'customer' ? 'bg-white shadow-xl text-blue-600 scale-[1.02]' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex-1 py-2.5 rounded-[16px] text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${authType === 'customer' ? 'bg-white shadow-lg text-blue-600 scale-[1.02]' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <i className="fas fa-user-circle mr-2 text-sm"></i> Customer
+            <i className="fas fa-user-circle mr-1 text-xs"></i> Customer
           </button>
           <button 
             onClick={() => { setAuthType('admin'); setError(null); }}
-            className={`flex-1 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${authType === 'admin' ? 'bg-gray-900 text-white shadow-xl scale-[1.02]' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex-1 py-2.5 rounded-[16px] text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${authType === 'admin' ? 'bg-gray-900 text-white shadow-lg scale-[1.02]' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <i className="fas fa-shield-halved mr-2 text-sm"></i> Admin Terminal
+            <i className="fas fa-shield-halved mr-1 text-xs"></i> Admin
           </button>
         </div>
 
-        <div className="px-8 pb-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-black text-gray-900 tracking-tighter mb-2">
+        <div className="px-6 pb-6">
+          <div className="text-center mb-5">
+            <h2 className="text-xl font-black text-gray-900 tracking-tighter mb-1">
               {isLogin ? (authType === 'admin' ? 'System Access' : 'Welcome Back') : (authType === 'admin' ? 'Admin Registration' : 'Create Account')}
             </h2>
             <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">
