@@ -1,0 +1,7 @@
+{
+  "name": "Electra - Premium Electronics E-Commerce",
+  "description": "A high-performance, modern electronics e-commerce platform with smart search, product management, and secure checkout flow.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
