@@ -40,15 +40,30 @@ const ProductList: React.FC<ProductListProps> = ({ products, addToCart, selected
           <div className="flex flex-wrap gap-4">
             <button 
               onClick={scrollToCatalog}
-              className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-blue-500/20"
+              className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-blue-500/20 flex items-center gap-2"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
               Shop Now
             </button>
             <button 
               onClick={scrollToCatalog}
-              className="bg-white/10 backdrop-blur-md text-white px-10 py-5 rounded-2xl font-black text-lg border border-white/20 hover:bg-white/20 transition-all"
+              className="bg-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-indigo-500/20 flex items-center gap-2"
             >
-              Learn More
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Explore Deals
+            </button>
+            <button 
+              onClick={scrollToCatalog}
+              className="bg-white/10 backdrop-blur-md text-white px-10 py-5 rounded-2xl font-black text-lg border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+              </svg>
+              View All Products
             </button>
           </div>
         </div>
