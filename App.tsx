@@ -47,27 +47,31 @@ const AppContent: React.FC = () => {
       return;
     }
 
-    const email = supabaseUser.email?.toLowerCase() || '';
-    
-    // Fetch profile (which is auto-created by our SQL trigger)
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', supabaseUser.id)
-      .single();
-    
-    if (error && error.code !== 'PGRST116') {
-      console.error("Error fetching profile:", error);
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+      
+      const authenticatedUser: User = {
+        id: supabaseUser.id,
+        email: supabaseUser.email?.toLowerCase() || '',
+        name: profile?.name || supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'Electra User',
+        role: profile?.role || 'customer'
+      };
+
+      setUser(authenticatedUser);
+    } catch (e) {
+      console.error("Session profile fetch failed:", e);
+      // Fallback to metadata if profile fails
+      setUser({
+        id: supabaseUser.id,
+        email: supabaseUser.email?.toLowerCase() || '',
+        name: supabaseUser.user_metadata?.name || 'Electra User',
+        role: 'customer'
+      });
     }
-
-    const authenticatedUser: User = {
-      id: supabaseUser.id,
-      email: email,
-      name: profile?.name || supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'Electra User',
-      role: profile?.role || 'customer'
-    };
-
-    setUser(authenticatedUser);
   };
 
   const fetchProducts = async () => {
@@ -82,14 +86,12 @@ const AppContent: React.FC = () => {
   };
 
   useEffect(() => {
-    // Check for error messages returned in the URL hash (common after failed OAuth)
     const hash = window.location.hash;
     if (hash.includes('error_description')) {
       const params = new URLSearchParams(hash.substring(1));
       const errorMsg = params.get('error_description');
       if (errorMsg) {
         alert(`Authentication Error: ${errorMsg.replace(/\+/g, ' ')}`);
-        // Clean up URL
         window.history.replaceState(null, '', window.location.pathname);
       }
     }
@@ -137,7 +139,7 @@ const AppContent: React.FC = () => {
   }, [products, searchQuery, selectedCategory]);
 
   return (
-    <div className={`min-h-screen flex flex-col ${isAdminPath ? 'bg-gray-50' : "bg-white font-['Inter']"}`}>
+    <div className={`min-h-screen flex flex-col font-sans ${isAdminPath ? 'bg-gray-50' : 'bg-white'}`}>
       {!isAdminPath && (
         <Header 
           user={user} 
