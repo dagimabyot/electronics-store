@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
 import { User } from '../types';
@@ -11,8 +10,7 @@ interface AuthModalProps {
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
-  const [authType, setAuthType] = useState<'customer' | 'admin'>('customer');
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', adminKey: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,8 +23,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Use Supabase's callback URL for proper OAuth handling
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: window.location.origin,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -34,10 +31,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         },
       });
       if (error) throw error;
-      // Note: The browser will redirect. The session handling is done in App.tsx.
     } catch (err: any) {
       console.error("Auth error:", err);
-      setError('Google sign-in unavailable. Please ensure the callback URL is added to your Google OAuth app settings: ' + `${window.location.origin}/auth/callback`);
+      setError('Google sign-in failed. Make sure your Supabase Google OAuth is configured with: ' + window.location.origin);
       setLoading(false);
     }
   };
@@ -48,12 +44,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
     setError(null);
 
     const email = formData.email.trim().toLowerCase();
-    
-    if (authType === 'admin' && !isLogin && formData.adminKey !== 'ELECTRA-2024') {
-      setError("Invalid Admin Registration Key. Authorization denied.");
-      setLoading(false);
-      return;
-    }
 
     try {
       if (isLogin) {
@@ -66,17 +56,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
 
         if (data.user) {
           const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
-          const role = profile?.role || 'customer';
           
-          if (authType === 'admin' && role !== 'admin') {
-            throw new Error("Access Denied: This account lacks administrative privileges.");
-          }
-
           onUserLogin({
             id: data.user.id,
             email: data.user.email!,
             name: profile?.name || data.user.user_metadata?.name || 'User',
-            role: role as 'admin' | 'customer'
+            role: 'customer'
           });
           onClose();
         }
@@ -93,7 +78,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         });
         
         if (signUpError) throw signUpError;
-        alert("Verification email sent! Please check your inbox to activate your account.");
+        alert("Verification email sent! Check your inbox to activate your account.");
+        setFormData({ name: '', email: '', password: '' });
+        setIsLogin(true);
         onClose();
       }
     } catch (err: any) {
@@ -107,45 +94,32 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-gray-950/90 backdrop-blur-2xl" onClick={onClose} />
       
-      <div className={`relative bg-white rounded-[32px] w-full max-w-sm shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] animate-scaleIn border border-white/10 overflow-hidden max-h-[90vh] overflow-y-auto`}>
-        {/* Header Tabs */}
-        <div className="flex bg-gray-100 p-1 m-4 rounded-[20px]">
-          <button 
-            onClick={() => { setAuthType('customer'); setError(null); }}
-            className={`flex-1 py-2.5 rounded-[16px] text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${authType === 'customer' ? 'bg-white shadow-lg text-blue-600 scale-[1.02]' : 'text-gray-400 hover:text-gray-600'}`}
-          >
-            <i className="fas fa-user-circle mr-1 text-xs"></i> Customer
-          </button>
-          <button 
-            onClick={() => { setAuthType('admin'); setError(null); }}
-            className={`flex-1 py-2.5 rounded-[16px] text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${authType === 'admin' ? 'bg-gray-900 text-white shadow-lg scale-[1.02]' : 'text-gray-400 hover:text-gray-600'}`}
-          >
-            <i className="fas fa-shield-halved mr-1 text-xs"></i> Admin
-          </button>
+      <div className="relative bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-gray-100 max-h-[85vh] overflow-y-auto">
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3 text-center border-b border-gray-100">
+          <h2 className="text-lg font-black text-gray-900 tracking-tight">
+            {isLogin ? 'Sign In' : 'Create Account'}
+          </h2>
+          <p className="text-gray-500 text-xs font-medium mt-0.5">
+            {isLogin ? 'Welcome back to Electronics Store' : 'Join our community'}
+          </p>
         </div>
 
-        <div className="px-6 pb-6">
-          <div className="text-center mb-5">
-            <h2 className="text-xl font-black text-gray-900 tracking-tighter mb-1">
-              {isLogin ? (authType === 'admin' ? 'System Access' : 'Welcome Back') : (authType === 'admin' ? 'Admin Registration' : 'Create Account')}
-            </h2>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">
-              {authType === 'admin' ? 'Secure Encrypted Management Portal' : 'Premium Electronics at your fingertips'}
-            </p>
-          </div>
-
+        <div className="px-5 py-4">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl text-[11px] font-black border border-red-100 flex items-center gap-3 animate-shake">
-              <i className="fas fa-exclamation-triangle"></i>
+            <div className="mb-3 p-3 bg-red-50 text-red-600 rounded-lg text-xs font-semibold border border-red-200 flex items-start gap-2">
+              <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
               <span className="flex-1">{error}</span>
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <button 
               onClick={handleGoogleLogin}
               disabled={loading}
-              className={`w-full py-3 bg-white border-2 border-gray-100 rounded-[16px] flex items-center justify-center gap-2 hover:border-blue-200 hover:bg-blue-50/30 transition-all group active:scale-95 disabled:opacity-50`}
+              className="w-full py-2.5 bg-white border-2 border-gray-200 rounded-lg flex items-center justify-center gap-2 hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -153,54 +127,79 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              <span className="text-xs font-bold text-gray-700 tracking-tight">
+              <span className="text-xs font-bold text-gray-700">
                 {loading ? 'Connecting...' : 'Google Sign In'}
               </span>
             </button>
 
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"></div></div>
-              <div className="relative flex justify-center text-[9px] uppercase font-black text-gray-300 bg-white px-4 tracking-[0.3em]">or security credentials</div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 border-t border-gray-200"></div>
+              <span className="text-xs text-gray-400 font-medium">or</span>
+              <div className="flex-1 border-t border-gray-200"></div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-2.5">
               {!isLogin && (
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-4">Legal Name</label>
-                  <input required className="w-full bg-gray-50 border-none p-4 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="Jane Doe" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                <div>
+                  <label className="text-xs font-bold text-gray-600 block mb-1">Full Name</label>
+                  <input 
+                    required 
+                    className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm" 
+                    placeholder="Jane Doe" 
+                    value={formData.name} 
+                    onChange={e => setFormData({...formData, name: e.target.value})} 
+                  />
                 </div>
               )}
               
-              <div className="space-y-1">
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-4">Email Workspace</label>
-                <input required type="email" className="w-full bg-gray-50 border-none p-4 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="name@company.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+              <div>
+                <label className="text-xs font-bold text-gray-600 block mb-1">Email</label>
+                <input 
+                  required 
+                  type="email" 
+                  className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm" 
+                  placeholder="name@example.com" 
+                  value={formData.email} 
+                  onChange={e => setFormData({...formData, email: e.target.value})} 
+                />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-4">Password</label>
-                <input required type="password" className="w-full bg-gray-50 border-none p-4 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+              <div>
+                <label className="text-xs font-bold text-gray-600 block mb-1">Password</label>
+                <input 
+                  required 
+                  type="password" 
+                  className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm" 
+                  placeholder="••••••••" 
+                  value={formData.password} 
+                  onChange={e => setFormData({...formData, password: e.target.value})} 
+                />
               </div>
-
-              {!isLogin && authType === 'admin' && (
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black text-red-500 uppercase tracking-widest ml-4">System Master Key</label>
-                  <input required type="text" className="w-full bg-red-50 border-2 border-red-100 p-4 rounded-2xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-mono text-red-600 font-bold" placeholder="Key Required" value={formData.adminKey} onChange={e => setFormData({...formData, adminKey: e.target.value})} />
-                </div>
-              )}
 
               <button 
                 type="submit" 
                 disabled={loading} 
-                className={`w-full py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 mt-4 active:scale-95 ${authType === 'admin' ? 'bg-gray-900 text-white hover:bg-black shadow-gray-200' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100'}`}
+                className="w-full py-2.5 mt-1 bg-blue-600 text-white font-bold text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {loading ? <i className="fas fa-circle-notch fa-spin text-lg"></i> : isLogin ? 'Authenticate' : 'Complete Setup'}
+                {loading ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : isLogin ? 'Sign In' : 'Create Account'}
               </button>
             </form>
           </div>
 
-          <div className="text-center mt-10">
-            <button onClick={() => { setIsLogin(!isLogin); setError(null); }} className="text-[10px] font-black text-gray-400 hover:text-blue-600 transition uppercase tracking-widest">
-              {isLogin ? "Need a new identity? Register" : "Already registered? Authenticate"}
+          <div className="text-center mt-4">
+            <button 
+              onClick={() => { setIsLogin(!isLogin); setError(null); setFormData({ name: '', email: '', password: '' }); }} 
+              className="text-xs font-bold text-gray-500 hover:text-blue-600 transition"
+            >
+              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>
           </div>
         </div>
