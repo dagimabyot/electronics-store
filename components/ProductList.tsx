@@ -56,16 +56,47 @@ const ProductList: React.FC<ProductListProps> = ({ products, addToCart, selected
               </svg>
               Explore Deals
             </button>
-            <button 
-              onClick={scrollToCatalog}
-              className="bg-white/10 backdrop-blur-md text-white px-10 py-5 rounded-2xl font-black text-lg border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-              </svg>
-              View All Products
-            </button>
           </div>
+        </div>
+      </section>
+
+      {/* Featured Products Section */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-yellow-100 rounded-lg">
+            <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Featured Products</h2>
+            <p className="text-gray-500">Handpicked bestsellers you'll love</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {products.slice(0, 4).map(product => (
+            <ProductCard key={product.id} product={product} addToCart={addToCart} />
+          ))}
+        </div>
+      </section>
+
+      {/* Explore Deals Section */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-red-100 rounded-lg">
+            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Explore Deals</h2>
+            <p className="text-gray-500">Limited time offers and discounts</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {products.slice(4, 8).map(product => (
+            <ProductCard key={product.id} product={product} addToCart={addToCart} />
+          ))}
         </div>
       </section>
 
