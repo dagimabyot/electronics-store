@@ -57,35 +57,71 @@ const ProductList: React.FC<ProductListProps> = ({ products, addToCart, selected
       {/* Catalog Header & Filters */}
       <div ref={catalogRef} className="pt-8 space-y-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Product Catalog</h2>
-            <p className="text-gray-500">Premium electronics curated for excellence</p>
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-3xl font-black text-gray-900 tracking-tight">Product Catalog</h2>
+              <p className="text-gray-500">Premium electronics curated for excellence</p>
+            </div>
           </div>
           
           <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar">
             <button
               onClick={() => onSelectCategory('All')}
-              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
+              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2 ${
                 selectedCategory === 'All' 
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
                 : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-100'
               }`}
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+              </svg>
               All Products
             </button>
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => onSelectCategory(cat)}
-                className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
-                  selectedCategory === cat 
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-100'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+            {CATEGORIES.map(cat => {
+              const categoryIcons: Record<string, JSX.Element> = {
+                'Smartphones': (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                ),
+                'Laptops': (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17H7a2 2 0 00-2 2v2a2 2 0 002 2h10a2 2 0 002-2v-2a2 2 0 00-2-2h-2m-4-4l2-4m0 0l2 4m-2-4v4" />
+                  </svg>
+                ),
+                'Audio': (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                ),
+                'Accessories': (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                )
+              };
+
+              return (
+                <button
+                  key={cat}
+                  onClick={() => onSelectCategory(cat)}
+                  className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2 ${
+                    selectedCategory === cat 
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
+                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-100'
+                  }`}
+                >
+                  {categoryIcons[cat]}
+                  {cat}
+                </button>
+              );
+            })}
           </div>
         </div>
 
