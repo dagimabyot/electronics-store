@@ -15,9 +15,16 @@ import AdminDashboard from './components/AdminDashboard';
 import OrderHistory from './components/OrderHistory';
 import UserProfile from './components/UserProfile';
 
+// Hardcoded list of admin emails
+const ADMIN_EMAILS = ['admin@electra.com', 'admin@example.com', 'test.admin@electra.com'];
+
+const isAdminEmail = (email: string): boolean => {
+  return ADMIN_EMAILS.includes(email?.toLowerCase() || '');
+};
+
 const AdminRoute: React.FC<{ children: React.ReactNode; user: User | null }> = ({ children, user }) => {
   if (user === null) return null; 
-  if (user.role !== 'admin') {
+  if (!isAdminEmail(user.email)) {
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;
@@ -47,31 +54,17 @@ const AppContent: React.FC = () => {
       return;
     }
 
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
-      
-      const authenticatedUser: User = {
-        id: supabaseUser.id,
-        email: supabaseUser.email?.toLowerCase() || '',
-        name: profile?.name || supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'Electra User',
-        role: profile?.role || 'customer'
-      };
+    const email = supabaseUser.email?.toLowerCase() || '';
+    const isAdmin = isAdminEmail(email);
+    
+    const authenticatedUser: User = {
+      id: supabaseUser.id,
+      email: email,
+      name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'User',
+      role: isAdmin ? 'admin' : 'customer'
+    };
 
-      setUser(authenticatedUser);
-    } catch (e) {
-      console.error("Session profile fetch failed:", e);
-      // Fallback to metadata if profile fails
-      setUser({
-        id: supabaseUser.id,
-        email: supabaseUser.email?.toLowerCase() || '',
-        name: supabaseUser.user_metadata?.name || 'Electra User',
-        role: 'customer'
-      });
-    }
+    setUser(authenticatedUser);
   };
 
   const fetchProducts = async () => {
