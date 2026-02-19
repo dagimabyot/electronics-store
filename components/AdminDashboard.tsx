@@ -126,7 +126,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ products, setProducts, 
               <div className="flex items-center gap-4">
                 <code className="text-2xl font-black text-red-600 tracking-widest font-mono">Dagim123$</code>
                 <button 
-                  onClick={() => navigator.clipboard.writeText('ELECTRA-2024')}
+                  onClick={() => navigator.clipboard.writeText('Dagim123$')}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-sm hover:bg-red-700 transition"
                 >
                   Copy
