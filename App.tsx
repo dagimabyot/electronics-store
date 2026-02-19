@@ -15,9 +15,16 @@ import AdminDashboard from './components/AdminDashboard';
 import OrderHistory from './components/OrderHistory';
 import UserProfile from './components/UserProfile';
 
+// Hardcoded list of admin emails
+const ADMIN_EMAILS = ['admin@electra.com', 'admin@example.com', 'test.admin@electra.com'];
+
+const isAdminEmail = (email: string): boolean => {
+  return ADMIN_EMAILS.includes(email?.toLowerCase() || '');
+};
+
 const AdminRoute: React.FC<{ children: React.ReactNode; user: User | null }> = ({ children, user }) => {
   if (user === null) return null; 
-  if (user.role !== 'admin') {
+  if (!isAdminEmail(user.email)) {
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;
@@ -47,31 +54,17 @@ const AppContent: React.FC = () => {
       return;
     }
 
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
-      
-      const authenticatedUser: User = {
-        id: supabaseUser.id,
-        email: supabaseUser.email?.toLowerCase() || '',
-        name: profile?.name || supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'Electra User',
-        role: profile?.role || 'customer'
-      };
+    const email = supabaseUser.email?.toLowerCase() || '';
+    const isAdmin = isAdminEmail(email);
+    
+    const authenticatedUser: User = {
+      id: supabaseUser.id,
+      email: email,
+      name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'User',
+      role: isAdmin ? 'admin' : 'customer'
+    };
 
-      setUser(authenticatedUser);
-    } catch (e) {
-      console.error("Session profile fetch failed:", e);
-      // Fallback to metadata if profile fails
-      setUser({
-        id: supabaseUser.id,
-        email: supabaseUser.email?.toLowerCase() || '',
-        name: supabaseUser.user_metadata?.name || 'Electra User',
-        role: 'customer'
-      });
-    }
+    setUser(authenticatedUser);
   };
 
   const fetchProducts = async () => {
@@ -154,26 +147,43 @@ const AppContent: React.FC = () => {
       <main className={`flex-grow ${isAdminPath ? '' : 'container mx-auto px-4 py-8'}`}>
         <Routes>
           <Route path="/" element={
-            <ProductList 
-              products={filteredProducts} 
-              addToCart={(p) => { 
+            user?.role === 'admin' ? (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <i className="fas fa-shield-halved text-3xl text-red-600"></i>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900 mb-2">Admin Access Only</h2>
+                <p className="text-gray-500 mb-8 max-w-md mx-auto">You are logged in as an administrator. Use the admin panel to manage products and orders.</p>
+                <Link to="/admin" className="inline-block px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition">Go to Admin Dashboard</Link>
+              </div>
+            ) : (
+              <ProductList 
+                products={filteredProducts} 
+                addToCart={(p) => { 
+                  setCart(prev => { 
+                    const ex = prev.find(i => i.id === p.id); 
+                    return ex ? prev.map(i => i.id === p.id ? {...i, quantity: i.quantity + 1} : i) : [...prev, {...p, quantity: 1}];
+                  }); 
+                  setIsCartOpen(true); 
+                }} 
+                selectedCategory={selectedCategory} 
+                onSelectCategory={setSelectedCategory} 
+              />
+            )
+          } />
+          <Route path="/product/:id" element={
+            user?.role === 'admin' ? (
+              <Navigate to="/" />
+            ) : (
+              <ProductDetail products={products} addToCart={(p) => {
                 setCart(prev => { 
                   const ex = prev.find(i => i.id === p.id); 
                   return ex ? prev.map(i => i.id === p.id ? {...i, quantity: i.quantity + 1} : i) : [...prev, {...p, quantity: 1}];
                 }); 
                 setIsCartOpen(true); 
-              }} 
-              selectedCategory={selectedCategory} 
-              onSelectCategory={setSelectedCategory} 
-            />
+              }} />
+            )
           } />
-          <Route path="/product/:id" element={<ProductDetail products={products} addToCart={(p) => {
-             setCart(prev => { 
-                  const ex = prev.find(i => i.id === p.id); 
-                  return ex ? prev.map(i => i.id === p.id ? {...i, quantity: i.quantity + 1} : i) : [...prev, {...p, quantity: 1}];
-                }); 
-                setIsCartOpen(true); 
-          }} />} />
           <Route path="/orders" element={user ? <OrderHistory orders={orders} /> : <Navigate to="/" />} />
           <Route path="/profile" element={user ? <UserProfile user={user} onUpdateUser={setUser} /> : <Navigate to="/" />} />
           <Route path="/checkout" element={user ? <Checkout cart={cart} onCheckout={async (o) => {

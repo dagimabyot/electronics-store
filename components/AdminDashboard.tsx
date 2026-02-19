@@ -13,7 +13,7 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ products, setProducts, orders, setOrders, onRefreshProducts }) => {
-  const [tab, setTab] = useState<'products' | 'orders' | 'system'>('system'); // Default to system for easier setup
+  const [tab, setTab] = useState<'products' | 'orders' | 'system' | 'users' | 'analytics'>('products'); // Default to products
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState(0);
@@ -107,17 +107,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ products, setProducts, 
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">System Status</h1>
           <p className="text-gray-400 font-medium">Supabase Project: <code className="text-blue-600">cncejkyoadvejmlehgsj</code></p>
         </div>
-        <div className="flex bg-gray-100 p-1.5 rounded-[20px] overflow-x-auto no-scrollbar">
-          <button onClick={() => setTab('system')} className={`px-8 py-3 rounded-2xl font-black text-sm transition-all ${tab === 'system' ? 'bg-white shadow-lg text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>Diagnostics</button>
-          <button onClick={() => setTab('products')} className={`px-8 py-3 rounded-2xl font-black text-sm transition-all ${tab === 'products' ? 'bg-white shadow-lg text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>Inventory</button>
-          <button onClick={() => setTab('orders')} className={`px-8 py-3 rounded-2xl font-black text-sm transition-all ${tab === 'orders' ? 'bg-white shadow-lg text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>Orders</button>
+        <div className="flex bg-gray-100 p-1.5 rounded-[20px] overflow-x-auto no-scrollbar gap-2">
+          <button onClick={() => setTab('products')} className={`px-6 py-3 rounded-2xl font-black text-sm transition-all whitespace-nowrap ${tab === 'products' ? 'bg-white shadow-lg text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}><i className="fas fa-boxes mr-2"></i>Products</button>
+          <button onClick={() => setTab('orders')} className={`px-6 py-3 rounded-2xl font-black text-sm transition-all whitespace-nowrap ${tab === 'orders' ? 'bg-white shadow-lg text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}><i className="fas fa-receipt mr-2"></i>Orders</button>
+          <button onClick={() => setTab('analytics')} className={`px-6 py-3 rounded-2xl font-black text-sm transition-all whitespace-nowrap ${tab === 'analytics' ? 'bg-white shadow-lg text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}><i className="fas fa-chart-bar mr-2"></i>Analytics</button>
+          <button onClick={() => setTab('system')} className={`px-6 py-3 rounded-2xl font-black text-sm transition-all whitespace-nowrap ${tab === 'system' ? 'bg-white shadow-lg text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}><i className="fas fa-cog mr-2"></i>System</button>
         </div>
       </div>
 
       {tab === 'system' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
-            <h3 className="text-xl font-black flex items-center gap-3"><i className="fas fa-microchip text-blue-500"></i>Connection Health</h3>
+        <div className="space-y-8">
+          <div className="bg-gradient-to-br from-red-50 to-red-100 p-8 rounded-[32px] border-2 border-red-300 shadow-lg">
+            <h2 className="text-xl font-black text-red-900 mb-4 flex items-center gap-3">
+              <i className="fas fa-key text-red-600 text-2xl"></i>System Master Key
+            </h2>
+            <div className="bg-white p-6 rounded-2xl border-2 border-red-200 mb-4">
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Your Admin Access Code</p>
+              <div className="flex items-center gap-4">
+                <code className="text-2xl font-black text-red-600 tracking-widest font-mono">ELECTRA-2024</code>
+                <button 
+                  onClick={() => navigator.clipboard.writeText('ELECTRA-2024')}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-sm hover:bg-red-700 transition"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+            <p className="text-[12px] text-red-800 font-medium">
+              <i className="fas fa-shield-alt mr-2"></i>Keep this key secure. Required for new admin registrations.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
+              <h3 className="text-xl font-black flex items-center gap-3"><i className="fas fa-microchip text-blue-500"></i>Connection Health</h3>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="p-6 bg-gray-50 rounded-3xl">
@@ -179,25 +202,116 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ products, setProducts, 
               {isSyncing ? `Injecting (${syncProgress}%)` : 'Sync 100 Products Now'}
             </button>
           </div>
+          </div>
         </div>
       )}
 
       {tab === 'products' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map(p => (
-            <div key={p.id} className="bg-white p-6 rounded-[28px] border border-gray-100 flex gap-4 hover:shadow-lg transition">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-gray-50">
-                <img src={p.images[0]} className="w-full h-full object-cover" />
-              </div>
-              <div className="flex-grow">
-                <h4 className="font-bold text-gray-900 line-clamp-1">{p.name}</h4>
-                <div className="flex justify-between items-center mt-4">
-                  <span className="text-blue-600 font-black">${p.price.toLocaleString()}</span>
-                  <button onClick={() => deleteProduct(p.id)} className="text-red-400 hover:text-red-600 text-[10px] font-black uppercase tracking-widest">Delete</button>
+        <div className="space-y-8">
+          <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+            <h2 className="text-2xl font-black mb-6 flex items-center gap-3"><i className="fas fa-cube text-blue-600"></i>Product Management</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map(p => (
+                <div key={p.id} className="bg-gray-50 p-6 rounded-2xl border border-gray-100 hover:shadow-lg transition">
+                  <div className="w-full h-32 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 mb-4">
+                    <img src={p.images[0]} className="w-full h-full object-cover" alt={p.name} />
+                  </div>
+                  <h4 className="font-bold text-gray-900 line-clamp-2 mb-2">{p.name}</h4>
+                  <p className="text-[11px] text-gray-500 mb-3">{p.brand} • Stock: {p.stock}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-600 font-black text-lg">${p.price.toLocaleString()}</span>
+                    <button onClick={() => deleteProduct(p.id)} className="text-red-400 hover:text-red-600 text-[9px] font-black uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg">Remove</button>
+                  </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'orders' && (
+        <div className="space-y-8">
+          <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+            <h2 className="text-2xl font-black mb-6 flex items-center gap-3"><i className="fas fa-shopping-bag text-blue-600"></i>Order Management</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b-2 border-gray-100">
+                    <th className="text-left py-4 px-4 font-black text-gray-600">Order ID</th>
+                    <th className="text-left py-4 px-4 font-black text-gray-600">Customer</th>
+                    <th className="text-left py-4 px-4 font-black text-gray-600">Total</th>
+                    <th className="text-left py-4 px-4 font-black text-gray-600">Status</th>
+                    <th className="text-left py-4 px-4 font-black text-gray-600">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map(order => (
+                    <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
+                      <td className="py-4 px-4 font-mono text-blue-600 font-bold text-xs">{order.id}</td>
+                      <td className="py-4 px-4 font-medium">{order.email}</td>
+                      <td className="py-4 px-4 font-bold text-gray-900">${order.total.toFixed(2)}</td>
+                      <td className="py-4 px-4">
+                        <span className={`px-3 py-1.5 rounded-lg font-black text-[9px] ${
+                          order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                          order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                          order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {order.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {orders.length === 0 && (
+                <div className="text-center py-12 text-gray-400">
+                  <i className="fas fa-inbox text-4xl mb-4 block opacity-50"></i>
+                  <p className="font-bold">No orders yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'analytics' && (
+        <div className="space-y-8">
+          <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+            <h2 className="text-2xl font-black mb-8 flex items-center gap-3"><i className="fas fa-chart-line text-blue-600"></i>Store Analytics</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200">
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">Total Sales</p>
+                <p className="text-3xl font-black text-blue-900">${orders.reduce((s, o) => s + o.total, 0).toFixed(0)}</p>
+              </div>
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl border border-green-200">
+                <p className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-2">Orders</p>
+                <p className="text-3xl font-black text-green-900">{orders.length}</p>
+              </div>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl border border-purple-200">
+                <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-2">Products</p>
+                <p className="text-3xl font-black text-purple-900">{products.length}</p>
+              </div>
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-2xl border border-orange-200">
+                <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-2">Avg Order Value</p>
+                <p className="text-3xl font-black text-orange-900">${orders.length > 0 ? (orders.reduce((s, o) => s + o.total, 0) / orders.length).toFixed(0) : '0'}</p>
               </div>
             </div>
-          ))}
+
+            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+              <h3 className="font-black text-gray-900 mb-4">Best Selling Products</h3>
+              <div className="space-y-3">
+                {products.slice(0, 5).map(p => (
+                  <div key={p.id} className="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-100">
+                    <span className="font-medium text-gray-900">{p.name}</span>
+                    <span className="text-blue-600 font-bold">${p.price.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

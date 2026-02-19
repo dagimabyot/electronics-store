@@ -93,7 +93,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         });
         
         if (signUpError) throw signUpError;
-        alert("Verification email sent! Please check your inbox to activate your account.");
+
+        // Create profile for new user
+        if (data.user) {
+          const profileRole = authType === 'admin' ? 'admin' : 'customer';
+          const { error: profileError } = await supabase.from('profiles').insert({
+            id: data.user.id,
+            email: email,
+            name: formData.name,
+            role: profileRole
+          });
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+            // Don't fail signup if profile creation fails
+          }
+
+          // For admin registration, show success message
+          if (authType === 'admin') {
+            alert("Admin account created! Verification email sent. Check your inbox to activate.");
+          } else {
+            alert("Account created! Verification email sent. Please check your inbox to activate your account.");
+          }
+        }
         onClose();
       }
     } catch (err: any) {
@@ -107,95 +129,91 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-gray-950/90 backdrop-blur-2xl" onClick={onClose} />
       
-      <div className={`relative bg-white rounded-[40px] w-full max-w-lg shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] animate-scaleIn border border-white/10 overflow-hidden`}>
+      <div className={`relative bg-white rounded-[32px] w-full max-w-sm shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] animate-scaleIn border border-white/10 overflow-hidden`}>
         {/* Header Tabs */}
-        <div className="flex bg-gray-100 p-1.5 m-8 rounded-[24px]">
+        <div className="flex bg-gray-100 p-1 m-5 rounded-[20px]">
           <button 
             onClick={() => { setAuthType('customer'); setError(null); }}
-            className={`flex-1 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${authType === 'customer' ? 'bg-white shadow-xl text-blue-600 scale-[1.02]' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex-1 py-3 rounded-[16px] text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${authType === 'customer' ? 'bg-white shadow-lg text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <i className="fas fa-user-circle mr-2 text-sm"></i> Customer
+            <i className="fas fa-user-circle mr-1.5 text-xs"></i> Customer
           </button>
           <button 
             onClick={() => { setAuthType('admin'); setError(null); }}
-            className={`flex-1 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${authType === 'admin' ? 'bg-gray-900 text-white shadow-xl scale-[1.02]' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex-1 py-3 rounded-[16px] text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${authType === 'admin' ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <i className="fas fa-shield-halved mr-2 text-sm"></i> Admin Terminal
+            <i className="fas fa-shield-halved mr-1.5 text-xs"></i> Admin
           </button>
         </div>
 
-        <div className="px-10 pb-12">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-black text-gray-900 tracking-tighter mb-2">
-              {isLogin ? (authType === 'admin' ? 'System Access' : 'Welcome Back') : (authType === 'admin' ? 'Admin Registration' : 'Create Account')}
+        <div className="px-7 pb-8 pt-4">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-black text-gray-900 tracking-tighter mb-1">
+              {isLogin ? (authType === 'admin' ? 'System Access' : 'Welcome Back') : (authType === 'admin' ? 'Admin Setup' : 'Create Account')}
             </h2>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">
-              {authType === 'admin' ? 'Secure Encrypted Management Portal' : 'Premium Electronics at your fingertips'}
+            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">
+              {authType === 'admin' ? 'Management Portal' : 'Electra Electronics'}
             </p>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl text-[11px] font-black border border-red-100 flex items-center gap-3 animate-shake">
-              <i className="fas fa-exclamation-triangle"></i>
+            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-[10px] font-black border border-red-100 flex items-center gap-2 animate-shake">
+              <i className="fas fa-exclamation-triangle flex-shrink-0"></i>
               <span className="flex-1">{error}</span>
             </div>
           )}
 
-          <div className="space-y-4">
-            <button 
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className={`w-full py-4 bg-white border-2 border-gray-100 rounded-[20px] flex items-center justify-center gap-3 hover:border-blue-200 hover:bg-blue-50/30 transition-all group active:scale-95 disabled:opacity-50`}
-            >
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 group-hover:rotate-12 transition-transform" alt="Google" />
-              <span className="text-xs font-black text-gray-700 tracking-tight">
-                {loading ? 'Opening Google...' : 'Continue with Google (Gmail)'}
-              </span>
-            </button>
-
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"></div></div>
-              <div className="relative flex justify-center text-[9px] uppercase font-black text-gray-300 bg-white px-4 tracking-[0.3em]">or security credentials</div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-3">
               {!isLogin && (
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-4">Legal Name</label>
-                  <input required className="w-full bg-gray-50 border-none p-4 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="Jane Doe" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                  <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-3">Name</label>
+                  <input required className="w-full bg-gray-50 border-none p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="Jane Doe" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </div>
               )}
               
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-4">Email Workspace</label>
-                <input required type="email" className="w-full bg-gray-50 border-none p-4 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="name@company.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-3">Email</label>
+                <input required type="email" className="w-full bg-gray-50 border-none p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="name@company.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-4">Password</label>
-                <input required type="password" className="w-full bg-gray-50 border-none p-4 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-3">Password</label>
+                <input required type="password" className="w-full bg-gray-50 border-none p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
               </div>
 
               {!isLogin && authType === 'admin' && (
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-red-500 uppercase tracking-widest ml-4">System Master Key</label>
-                  <input required type="text" className="w-full bg-red-50 border-2 border-red-100 p-4 rounded-2xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-mono text-red-600 font-bold" placeholder="Key Required" value={formData.adminKey} onChange={e => setFormData({...formData, adminKey: e.target.value})} />
+                  <label className="text-[8px] font-black text-red-500 uppercase tracking-widest ml-3">Master Key</label>
+                  <input required type="text" className="w-full bg-red-50 border-2 border-red-100 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-mono text-red-600 font-bold" placeholder="Key Required" value={formData.adminKey} onChange={e => setFormData({...formData, adminKey: e.target.value})} />
                 </div>
               )}
 
               <button 
                 type="submit" 
                 disabled={loading} 
-                className={`w-full py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 mt-4 active:scale-95 ${authType === 'admin' ? 'bg-gray-900 text-white hover:bg-black shadow-gray-200' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100'}`}
+                className={`w-full py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-4 active:scale-95 ${authType === 'admin' ? 'bg-gray-900 text-white hover:bg-black' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
               >
-                {loading ? <i className="fas fa-circle-notch fa-spin text-lg"></i> : isLogin ? 'Authenticate' : 'Complete Setup'}
+                {loading ? <i className="fas fa-circle-notch fa-spin"></i> : isLogin ? 'Authenticate' : 'Complete Setup'}
+              </button>
+
+              <button 
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className={`w-full py-3 bg-white border-2 border-gray-100 rounded-xl flex items-center justify-center gap-2 hover:border-blue-200 hover:bg-blue-50/30 transition-all group active:scale-95 disabled:opacity-50 mt-2`}
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4 group-hover:rotate-12 transition-transform" alt="Google" />
+                <span className="text-[9px] font-black text-gray-700 tracking-tight">
+                  {loading ? 'Opening Google...' : 'Google Sign-in'}
+                </span>
               </button>
             </form>
           </div>
 
-          <div className="text-center mt-10">
-            <button onClick={() => { setIsLogin(!isLogin); setError(null); }} className="text-[10px] font-black text-gray-400 hover:text-blue-600 transition uppercase tracking-widest">
-              {isLogin ? "Need a new identity? Register" : "Already registered? Authenticate"}
+          <div className="text-center mt-6">
+            <button onClick={() => { setIsLogin(!isLogin); setError(null); }} className="text-[9px] font-black text-gray-400 hover:text-blue-600 transition uppercase tracking-widest">
+              {isLogin ? "Need account? Register" : "Have account? Login"}
             </button>
           </div>
         </div>
