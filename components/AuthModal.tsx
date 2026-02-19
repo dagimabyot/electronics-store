@@ -3,13 +3,6 @@ import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
 import { User } from '../types';
 
-// Hardcoded list of admin emails
-const ADMIN_EMAILS = ['admin@electra.com', 'admin@example.com', 'test.admin@electra.com'];
-
-const isAdminEmail = (email: string): boolean => {
-  return ADMIN_EMAILS.includes(email?.toLowerCase() || '');
-};
-
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -33,7 +26,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         provider: 'google',
         options: {
           // Explicitly defining the redirect helps Supabase route back to your app correctly
-          redirectTo: `${window.location.origin}${window.location.pathname}`,
+          redirectTo: window.location.origin,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
@@ -42,9 +35,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
       });
       if (error) throw error;
       // Note: The browser will redirect. The session handling is done in App.tsx.
-      // The modal will close automatically when user is authenticated via onAuthStateChange
     } catch (err: any) {
-      console.error("[v0] Google auth error:", err);
+      console.error("Auth error:", err);
       setError(err.message || 'Google authentication failed. Check your Google Cloud Console settings.');
       setLoading(false);
     }
@@ -73,28 +65,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         if (signInError) throw signInError;
 
         if (data.user) {
-          // Check if user is admin based on email
-          const userIsAdmin = isAdminEmail(data.user.email!);
+          const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
+          const role = profile?.role || 'customer';
           
-          // If they selected "Admin" tab but aren't an admin, reject
-          if (authType === 'admin' && !userIsAdmin) {
-            throw new Error("Access Denied: This email is not registered as an administrator.");
+          if (authType === 'admin' && role !== 'admin') {
+            throw new Error("Access Denied: This account lacks administrative privileges.");
           }
 
           onUserLogin({
             id: data.user.id,
             email: data.user.email!,
-            name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
-            role: userIsAdmin ? 'admin' : 'customer'
+            name: profile?.name || data.user.user_metadata?.name || 'User',
+            role: role as 'admin' | 'customer'
           });
           onClose();
         }
       } else {
-        // For admin signup, verify email is in admin list
-        if (authType === 'admin' && !isAdminEmail(email)) {
-          throw new Error(`Access Denied: Only authorized admin emails can register as administrators. Contact your system administrator.`);
-        }
-
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password: formData.password,
@@ -108,7 +94,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         
         if (signUpError) throw signUpError;
 
+        // Create profile for new user
         if (data.user) {
+          const profileRole = authType === 'admin' ? 'admin' : 'customer';
+          const { error: profileError } = await supabase.from('profiles').insert({
+            id: data.user.id,
+            email: email,
+            name: formData.name,
+            role: profileRole
+          });
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+            // Don't fail signup if profile creation fails
+          }
+
           // For admin registration, show success message
           if (authType === 'admin') {
             alert("Admin account created! Verification email sent. Check your inbox to activate.");

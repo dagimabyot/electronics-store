@@ -51,14 +51,11 @@ const AppContent: React.FC = () => {
   const handleUserSession = async (supabaseUser: any) => {
     if (!supabaseUser) {
       setUser(null);
-      console.log("[v0] User logged out");
       return;
     }
 
     const email = supabaseUser.email?.toLowerCase() || '';
     const isAdmin = isAdminEmail(email);
-    
-    console.log("[v0] User authenticated:", { email, isAdmin, adminEmails: ADMIN_EMAILS });
     
     const authenticatedUser: User = {
       id: supabaseUser.id,
@@ -67,7 +64,6 @@ const AppContent: React.FC = () => {
       role: isAdmin ? 'admin' : 'customer'
     };
 
-    console.log("[v0] User set:", authenticatedUser);
     setUser(authenticatedUser);
   };
 
@@ -94,40 +90,19 @@ const AppContent: React.FC = () => {
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        handleUserSession(session.user);
-        // Auto-redirect admins to dashboard after session restored
-        const email = session.user.email?.toLowerCase() || '';
-        if (isAdminEmail(email)) {
-          setTimeout(() => navigate('/admin'), 100);
-        }
-      } else {
-        handleUserSession(null);
-      }
+      handleUserSession(session?.user || null);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        handleUserSession(session.user);
-        // Auto-redirect admins to dashboard on sign in
-        const email = session.user.email?.toLowerCase() || '';
-        if (isAdminEmail(email)) {
-          setTimeout(() => navigate('/admin'), 100);
-        }
-      } else {
-        handleUserSession(null);
-      }
+      handleUserSession(session?.user || null);
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
     fetchProducts();
     if (user) {
-      // Close auth modal when user logs in (especially for Google auth)
-      setIsAuthOpen(false);
-      
       const query = user.role === 'admin' 
         ? supabase.from('orders').select('*') 
         : supabase.from('orders').select('*').eq('userId', user.id);
@@ -268,11 +243,7 @@ const AppContent: React.FC = () => {
         onClose={() => setIsAuthOpen(false)} 
         onUserLogin={(u) => {
           setUser(u);
-          setIsAuthOpen(false);
-          // Auto-redirect admins to dashboard
-          if (u.role === 'admin') {
-            setTimeout(() => navigate('/admin'), 100);
-          }
+          if (u.role === 'admin') navigate('/admin');
         }}
       />
     </div>
