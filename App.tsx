@@ -15,8 +15,9 @@ import AdminDashboard from './components/AdminDashboard';
 import OrderHistory from './components/OrderHistory';
 import UserProfile from './components/UserProfile';
 
+
 // Hardcoded list of admin emails
-const ADMIN_EMAILS = ['admin@electra.com', 'admin@example.com', 'test.admin@electra.com'];
+const ADMIN_EMAILS = ['admin@electra.com', 'admin@example.com', 'test.admin@electra.com','dagim045@gmail.com'];
 
 const isAdminEmail = (email: string): boolean => {
   return ADMIN_EMAILS.includes(email?.toLowerCase() || '');
