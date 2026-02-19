@@ -116,9 +116,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ products, setProducts, 
       </div>
 
       {tab === 'system' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
-            <h3 className="text-xl font-black flex items-center gap-3"><i className="fas fa-microchip text-blue-500"></i>Connection Health</h3>
+        <div className="space-y-8">
+          <div className="bg-gradient-to-br from-red-50 to-red-100 p-8 rounded-[32px] border-2 border-red-300 shadow-lg">
+            <h2 className="text-xl font-black text-red-900 mb-4 flex items-center gap-3">
+              <i className="fas fa-key text-red-600 text-2xl"></i>System Master Key
+            </h2>
+            <div className="bg-white p-6 rounded-2xl border-2 border-red-200 mb-4">
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Your Admin Access Code</p>
+              <div className="flex items-center gap-4">
+                <code className="text-2xl font-black text-red-600 tracking-widest font-mono">ELECTRA-2024</code>
+                <button 
+                  onClick={() => navigator.clipboard.writeText('ELECTRA-2024')}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-sm hover:bg-red-700 transition"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+            <p className="text-[12px] text-red-800 font-medium">
+              <i className="fas fa-shield-alt mr-2"></i>Keep this key secure. Required for new admin registrations.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
+              <h3 className="text-xl font-black flex items-center gap-3"><i className="fas fa-microchip text-blue-500"></i>Connection Health</h3>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="p-6 bg-gray-50 rounded-3xl">
@@ -179,6 +201,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ products, setProducts, 
             >
               {isSyncing ? `Injecting (${syncProgress}%)` : 'Sync 100 Products Now'}
             </button>
+          </div>
           </div>
         </div>
       )}
