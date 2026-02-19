@@ -33,7 +33,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         provider: 'google',
         options: {
           // Explicitly defining the redirect helps Supabase route back to your app correctly
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}${window.location.pathname}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
@@ -42,8 +42,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
       });
       if (error) throw error;
       // Note: The browser will redirect. The session handling is done in App.tsx.
+      // The modal will close automatically when user is authenticated via onAuthStateChange
     } catch (err: any) {
-      console.error("Auth error:", err);
+      console.error("[v0] Google auth error:", err);
       setError(err.message || 'Google authentication failed. Check your Google Cloud Console settings.');
       setLoading(false);
     }
