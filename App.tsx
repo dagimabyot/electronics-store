@@ -243,7 +243,11 @@ const AppContent: React.FC = () => {
         onClose={() => setIsAuthOpen(false)} 
         onUserLogin={(u) => {
           setUser(u);
-          if (u.role === 'admin') navigate('/admin');
+          setIsAuthOpen(false);
+          // Auto-redirect admins to dashboard
+          if (u.role === 'admin') {
+            setTimeout(() => navigate('/admin'), 100);
+          }
         }}
       />
     </div>
