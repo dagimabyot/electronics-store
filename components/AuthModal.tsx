@@ -93,7 +93,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         });
         
         if (signUpError) throw signUpError;
-        alert("Verification email sent! Please check your inbox to activate your account.");
+
+        // Create profile for new user
+        if (data.user) {
+          const profileRole = authType === 'admin' ? 'admin' : 'customer';
+          const { error: profileError } = await supabase.from('profiles').insert({
+            id: data.user.id,
+            email: email,
+            name: formData.name,
+            role: profileRole
+          });
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+            // Don't fail signup if profile creation fails
+          }
+
+          // For admin registration, show success message
+          if (authType === 'admin') {
+            alert("Admin account created! Verification email sent. Check your inbox to activate.");
+          } else {
+            alert("Account created! Verification email sent. Please check your inbox to activate your account.");
+          }
+        }
         onClose();
       }
     } catch (err: any) {
