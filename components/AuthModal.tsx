@@ -12,23 +12,39 @@ interface AuthModalProps {
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [authType, setAuthType] = useState<'customer' | 'admin'>('customer');
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', adminKey: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if email is in admin whitelist
+  // Check if email is in admin whitelist (database validation)
   const checkAdminWhitelist = async (email: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase
         .from('admin_whitelist')
-        .select('email')
+        .select('id')
         .eq('email', email.toLowerCase())
+        .eq('approved', true)
         .single();
       
       return !error && !!data;
     } catch (err) {
-      console.log('[v0] Email not in whitelist');
+      console.log('[v0] Email not in admin whitelist');
       return false;
+    }
+  };
+
+  // Get user role from database
+  const getUserRole = async (userId: string): Promise<'admin' | 'customer'> => {
+    try {
+      const { data: adminData } = await supabase
+        .from('admins')
+        .select('id')
+        .eq('id', userId)
+        .single();
+      
+      return adminData ? 'admin' : 'customer';
+    } catch (err) {
+      return 'customer';
     }
   };
 
@@ -38,15 +54,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
     setLoading(true);
     setError(null);
     try {
-      // If admin login, check whitelist first
-      if (authType === 'admin' && !isLogin) {
-        // For Google signup as admin, we need to verify email first
-        // This will be handled in the OAuth callback
-        setError('Admin registration via Google requires email verification. Please use email/password signup.');
-        setLoading(false);
-        return;
-      }
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -58,10 +65,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         },
       });
       if (error) throw error;
-      // Note: The browser will redirect. The session handling is done in App.tsx.
+      // The browser will redirect. Session handling and user record creation happens in App.tsx via onAuthStateChange
     } catch (err: any) {
       console.error('[v0] Google auth error:', err);
-      setError(err.message || 'Google authentication failed. Check your Google Cloud Console settings.');
+      setError(err.message || 'Google authentication failed.');
       setLoading(false);
     }
   };
@@ -84,51 +91,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         if (signInError) throw signInError;
 
         if (data.user) {
-          // Check if user exists in users table
-          const { data: userData } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
-
-          // Check if admin login
-          if (authType === 'admin') {
-            const { data: adminData } = await supabase
-              .from('admins')
-              .select('*')
-              .eq('id', data.user.id)
-              .single();
-            
-            if (!adminData) {
-              throw new Error("Access Denied: This account is not registered as an administrator.");
-            }
-
-            onUserLogin({
-              id: data.user.id,
-              email: data.user.email!,
-              name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'Admin',
-              role: 'admin'
-            });
-          } else {
-            // Customer login
-            onUserLogin({
-              id: data.user.id,
-              email: data.user.email!,
-              name: userData?.full_name || data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
-              role: 'customer'
-            });
+          // Get user role from database
+          const role = await getUserRole(data.user.id);
+          
+          // If admin tab selected, verify user is actually an admin
+          if (authType === 'admin' && role !== 'admin') {
+            throw new Error("Access Denied: This account is not registered as an administrator.");
           }
+
+          onUserLogin({
+            id: data.user.id,
+            email: data.user.email!,
+            name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
+            role: role
+          });
           onClose();
         }
       } else {
         // SIGNUP FLOW
-        // For admin signup, verify email is in whitelist
+        // For admin signup, verify email is in whitelist first
         if (authType === 'admin') {
           const isWhitelisted = await checkAdminWhitelist(email);
           if (!isWhitelisted) {
-            setError("Invalid Admin Registration Email. Authorization denied.");
-            setLoading(false);
-            return;
+            throw new Error("Invalid Admin Registration Email. Authorization denied.");
           }
         }
 
@@ -138,6 +123,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
           options: { 
             data: { 
               full_name: formData.name,
+              provider: 'email'
             },
             emailRedirectTo: `${window.location.origin}${window.location.pathname}`
           }
@@ -146,95 +132,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         if (signUpError) throw signUpError;
 
         if (data.user) {
-          // Create user record in users table
-          const { error: userError } = await supabase.from('users').insert({
-            id: data.user.id,
-            email: email,
-            provider: 'email',
-            role: authType === 'admin' ? 'admin' : 'customer'
-          });
-
-          if (userError && userError.code !== '23505') { // Ignore duplicate key error
-            console.error('[v0] User creation error:', userError);
-          }
-
-          // If admin signup, create admin record
-          if (authType === 'admin') {
-            const { error: adminError } = await supabase.from('admins').insert({
-              id: data.user.id,
-              email: email,
-              role: 'admin'
-            });
-
-            if (adminError && adminError.code !== '23505') {
-              console.error('[v0] Admin record creation error:', adminError);
-            }
-          }
-
-          if (authType === 'admin') {
-            alert("Admin account created! Verification email sent. Check your inbox to activate.");
-          } else {
-            alert("Account created! Verification email sent. Please check your inbox to activate your account.");
-          }
-        }
-        onClose();
-      }
-
-    try {
-      if (isLogin) {
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password: formData.password,
-        });
-        
-        if (signInError) throw signInError;
-
-        if (data.user) {
-          const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
-          const role = profile?.role || 'customer';
+          console.log('[v0] User signed up:', email);
+          // User record will be automatically created by database trigger on auth.users insert
           
-          if (authType === 'admin' && role !== 'admin') {
-            throw new Error("Access Denied: This account lacks administrative privileges.");
-          }
-
-          onUserLogin({
-            id: data.user.id,
-            email: data.user.email!,
-            name: profile?.name || data.user.user_metadata?.name || 'User',
-            role: role as 'admin' | 'customer'
-          });
-          onClose();
-        }
-      } else {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password: formData.password,
-          options: { 
-            data: { 
-              name: formData.name, 
-            },
-            emailRedirectTo: window.location.origin 
-          }
-        });
-        
-        if (signUpError) throw signUpError;
-
-        // Create profile for new user
-        if (data.user) {
-          const profileRole = authType === 'admin' ? 'admin' : 'customer';
-          const { error: profileError } = await supabase.from('profiles').insert({
-            id: data.user.id,
-            email: email,
-            name: formData.name,
-            role: profileRole
-          });
-
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-            // Don't fail signup if profile creation fails
-          }
-
-          // For admin registration, show success message
           if (authType === 'admin') {
             alert("Admin account created! Verification email sent. Check your inbox to activate.");
           } else {
