@@ -6,7 +6,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM admin_whitelist 
-    WHERE LOWER(admin_whitelist.email) = LOWER(email_to_check) 
+    WHERE email_lower = LOWER(email_to_check) 
     AND approved = true
   );
 END;
