@@ -53,14 +53,35 @@ const AppContent: React.FC = () => {
       const userId = supabaseUser.id;
       const email = supabaseUser.email?.toLowerCase() || '';
 
-      // Check if user is an admin by querying the admins table
-      const { data: adminData } = await supabase
-        .from('admins')
-        .select('role')
+      // First, ensure user record exists in users table
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
         .eq('id', userId)
         .single();
 
-      const userRole = adminData?.role === 'admin' ? 'admin' : 'customer';
+      if (!existingUser) {
+        // Create user record if it doesn't exist (for OAuth users)
+        const { error: userError } = await supabase.from('users').insert({
+          id: userId,
+          email: email,
+          provider: supabaseUser.app_metadata?.provider || 'email',
+          role: 'customer' // Will be updated if they're in admins table
+        });
+
+        if (userError && userError.code !== '23505') { // Ignore duplicate key error
+          console.error('[v0] Error creating user record:', userError);
+        }
+      }
+
+      // Check if user is an admin by querying the admins table
+      const { data: adminData } = await supabase
+        .from('admins')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      const userRole = adminData ? 'admin' : 'customer';
       
       console.log('[v0] User authenticated:', { email, role: userRole });
       
@@ -82,9 +103,6 @@ const AppContent: React.FC = () => {
         role: 'customer'
       });
     }
-  };
-
-    setUser(authenticatedUser);
   };
 
   const fetchProducts = async () => {
