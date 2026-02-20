@@ -15,16 +15,10 @@ import AdminDashboard from './components/AdminDashboard';
 import OrderHistory from './components/OrderHistory';
 import UserProfile from './components/UserProfile';
 
-// Hardcoded list of admin emails
-const ADMIN_EMAILS = ['admin@electra.com', 'admin@example.com', 'test.admin@electra.com'];
-
-const isAdminEmail = (email: string): boolean => {
-  return ADMIN_EMAILS.includes(email?.toLowerCase() || '');
-};
-
+// Admin route protection - checks user role from database
 const AdminRoute: React.FC<{ children: React.ReactNode; user: User | null }> = ({ children, user }) => {
   if (user === null) return null; 
-  if (!isAdminEmail(user.email)) {
+  if (user.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;
@@ -51,18 +45,44 @@ const AppContent: React.FC = () => {
   const handleUserSession = async (supabaseUser: any) => {
     if (!supabaseUser) {
       setUser(null);
+      console.log('[v0] User logged out');
       return;
     }
 
-    const email = supabaseUser.email?.toLowerCase() || '';
-    const isAdmin = isAdminEmail(email);
-    
-    const authenticatedUser: User = {
-      id: supabaseUser.id,
-      email: email,
-      name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'User',
-      role: isAdmin ? 'admin' : 'customer'
-    };
+    try {
+      const userId = supabaseUser.id;
+      const email = supabaseUser.email?.toLowerCase() || '';
+
+      // Check if user is an admin by querying the admins table
+      const { data: adminData } = await supabase
+        .from('admins')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      const userRole = adminData?.role === 'admin' ? 'admin' : 'customer';
+      
+      console.log('[v0] User authenticated:', { email, role: userRole });
+      
+      const authenticatedUser: User = {
+        id: userId,
+        email: email,
+        name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'User',
+        role: userRole
+      };
+
+      setUser(authenticatedUser);
+    } catch (err) {
+      console.error('[v0] Error setting user session:', err);
+      // Fallback to customer role if query fails
+      setUser({
+        id: supabaseUser.id,
+        email: supabaseUser.email?.toLowerCase() || '',
+        name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'User',
+        role: 'customer'
+      });
+    }
+  };
 
     setUser(authenticatedUser);
   };
@@ -116,6 +136,14 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('electra_cart', JSON.stringify(cart));
   }, [cart]);
+
+  // Auto-redirect admins to dashboard on login
+  useEffect(() => {
+    if (user && user.role === 'admin' && !location.pathname.startsWith('/admin')) {
+      console.log('[v0] Admin detected, redirecting to dashboard');
+      navigate('/admin');
+    }
+  }, [user, navigate, location]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

@@ -12,9 +12,25 @@ interface AuthModalProps {
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [authType, setAuthType] = useState<'customer' | 'admin'>('customer');
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', adminKey: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Check if email is in admin whitelist
+  const checkAdminWhitelist = async (email: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_whitelist')
+        .select('email')
+        .eq('email', email.toLowerCase())
+        .single();
+      
+      return !error && !!data;
+    } catch (err) {
+      console.log('[v0] Email not in whitelist');
+      return false;
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -22,11 +38,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
     setLoading(true);
     setError(null);
     try {
+      // If admin login, check whitelist first
+      if (authType === 'admin' && !isLogin) {
+        // For Google signup as admin, we need to verify email first
+        // This will be handled in the OAuth callback
+        setError('Admin registration via Google requires email verification. Please use email/password signup.');
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Explicitly defining the redirect helps Supabase route back to your app correctly
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}${window.location.pathname}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
@@ -36,7 +60,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
       if (error) throw error;
       // Note: The browser will redirect. The session handling is done in App.tsx.
     } catch (err: any) {
-      console.error("Auth error:", err);
+      console.error('[v0] Google auth error:', err);
       setError(err.message || 'Google authentication failed. Check your Google Cloud Console settings.');
       setLoading(false);
     }
@@ -48,12 +72,113 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
     setError(null);
 
     const email = formData.email.trim().toLowerCase();
-    
-    if (authType === 'admin' && !isLogin && formData.adminKey !== 'ELECTRA-2024') {
-      setError("Invalid Admin Registration Key. Authorization denied.");
-      setLoading(false);
-      return;
-    }
+
+    try {
+      if (isLogin) {
+        // LOGIN FLOW
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password: formData.password,
+        });
+        
+        if (signInError) throw signInError;
+
+        if (data.user) {
+          // Check if user exists in users table
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+          // Check if admin login
+          if (authType === 'admin') {
+            const { data: adminData } = await supabase
+              .from('admins')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+            
+            if (!adminData) {
+              throw new Error("Access Denied: This account is not registered as an administrator.");
+            }
+
+            onUserLogin({
+              id: data.user.id,
+              email: data.user.email!,
+              name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'Admin',
+              role: 'admin'
+            });
+          } else {
+            // Customer login
+            onUserLogin({
+              id: data.user.id,
+              email: data.user.email!,
+              name: userData?.full_name || data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'User',
+              role: 'customer'
+            });
+          }
+          onClose();
+        }
+      } else {
+        // SIGNUP FLOW
+        // For admin signup, verify email is in whitelist
+        if (authType === 'admin') {
+          const isWhitelisted = await checkAdminWhitelist(email);
+          if (!isWhitelisted) {
+            setError("Invalid Admin Registration Email. Authorization denied.");
+            setLoading(false);
+            return;
+          }
+        }
+
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password: formData.password,
+          options: { 
+            data: { 
+              full_name: formData.name,
+            },
+            emailRedirectTo: `${window.location.origin}${window.location.pathname}`
+          }
+        });
+        
+        if (signUpError) throw signUpError;
+
+        if (data.user) {
+          // Create user record in users table
+          const { error: userError } = await supabase.from('users').insert({
+            id: data.user.id,
+            email: email,
+            provider: 'email',
+            role: authType === 'admin' ? 'admin' : 'customer'
+          });
+
+          if (userError && userError.code !== '23505') { // Ignore duplicate key error
+            console.error('[v0] User creation error:', userError);
+          }
+
+          // If admin signup, create admin record
+          if (authType === 'admin') {
+            const { error: adminError } = await supabase.from('admins').insert({
+              id: data.user.id,
+              email: email,
+              role: 'admin'
+            });
+
+            if (adminError && adminError.code !== '23505') {
+              console.error('[v0] Admin record creation error:', adminError);
+            }
+          }
+
+          if (authType === 'admin') {
+            alert("Admin account created! Verification email sent. Check your inbox to activate.");
+          } else {
+            alert("Account created! Verification email sent. Please check your inbox to activate your account.");
+          }
+        }
+        onClose();
+      }
 
     try {
       if (isLogin) {
