@@ -129,30 +129,34 @@ CREATE OR REPLACE FUNCTION create_user_on_signup()
 RETURNS TRIGGER AS $$
 DECLARE
   provider_name TEXT;
+  is_admin BOOLEAN;
 BEGIN
+  -- Determine provider
   provider_name := COALESCE(
-    NEW.raw_user_meta_data->>'provider',
+    NEW.raw_app_meta_data->>'provider',
     'email'
   );
 
+  -- Check if email is in admin whitelist
+  is_admin := is_admin_email(NEW.email);
+
+  -- Insert user record
   INSERT INTO users (id, email, provider, role)
   VALUES (
     NEW.id,
     NEW.email,
     provider_name,
-    CASE 
-      WHEN is_admin_email(NEW.email) THEN 'admin'
-      ELSE 'customer'
-    END
+    CASE WHEN is_admin THEN 'admin' ELSE 'customer' END
   )
-  ON CONFLICT (email) DO UPDATE SET
+  ON CONFLICT (id) DO UPDATE SET
     provider = EXCLUDED.provider,
     updated_at = NOW();
 
-  IF is_admin_email(NEW.email) THEN
+  -- If user is admin, create admin record
+  IF is_admin THEN
     INSERT INTO admins (id, email)
     VALUES (NEW.id, NEW.email)
-    ON CONFLICT (email_lower) DO NOTHING;
+    ON CONFLICT (id) DO NOTHING;
   END IF;
 
   RETURN NEW;
