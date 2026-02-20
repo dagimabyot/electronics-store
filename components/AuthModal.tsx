@@ -22,8 +22,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
       const { data, error } = await supabase
         .from('admin_whitelist')
         .select('id')
-        .eq('email_lower', email.toLowerCase())
-        .eq('approved', true)
+        .ilike('email', email)
         .single();
       
       return !error && !!data;
