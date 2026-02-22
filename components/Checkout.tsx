@@ -36,6 +36,10 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
       setStep(2);
       return;
     }
+    if (step === 2) {
+      // Redirect to Stripe Checkout Link
+      window.location.href = 'https://buy.stripe.com/test_dRm5kx3secSceRx01x6Zy00';
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,11 +104,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
                   <p className="text-sm text-green-800 mb-4 font-medium">Your payment is processed securely by Stripe. Industry-standard 256-bit encryption protects your information.</p>
                   
                   <button
-                    type="button"
-                    onClick={() => {
-                      // Redirect to Stripe Checkout Link
-                      window.location.href = 'https://buy.stripe.com/test_dRm5kx3secSceRx01x6Zy00';
-                    }}
+                    type="submit"
                     className="w-full bg-green-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-lg"
                   >
                     <i className="fab fa-stripe"></i>

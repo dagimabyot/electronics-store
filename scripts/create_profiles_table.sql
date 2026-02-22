@@ -53,7 +53,7 @@ CREATE TRIGGER update_profiles_updated_at
 -- Create orders table if it doesn't exist
 CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY,
-  userId UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  "userId" UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Paid', 'Shipped', 'Delivered')),
   total DECIMAL(10, 2) NOT NULL,
   items JSONB NOT NULL,
@@ -71,10 +71,10 @@ DROP POLICY IF EXISTS "Users can see their own orders" ON orders;
 CREATE POLICY "Users can see their own orders"
   ON orders
   FOR SELECT
-  USING (auth.uid() = userId);
+  USING (auth.uid() = "userId");
 
 -- Create index on userId for faster lookups
-CREATE INDEX IF NOT EXISTS idx_orders_userId ON orders(userId);
+CREATE INDEX IF NOT EXISTS idx_orders_userId ON orders("userId");
 
 -- Create products table if it doesn't exist
 CREATE TABLE IF NOT EXISTS products (
