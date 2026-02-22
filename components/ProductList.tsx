@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { Product, Category } from '../types';
 import { CATEGORIES } from '../constants';
@@ -56,13 +55,15 @@ const ProductList: React.FC<ProductListProps> = ({ products, addToCart, selected
 
       {/* Catalog Header & Filters */}
       <div ref={catalogRef} className="pt-8 space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        {/* FIX: Changed items-center to items-end for better visual baseline alignment */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
           <div>
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Product Catalog</h2>
-            <p className="text-gray-500">Premium electronics curated for excellence</p>
+            <h2 className="text-4xl font-black text-gray-900 tracking-tight leading-none">Product Catalog</h2>
+            <p className="text-gray-500 mt-2">Premium electronics curated for excellence</p>
           </div>
           
-          <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar">
+          {/* FIX: Added md:pb-1 to align button text with the header description baseline */}
+          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-1 w-full md:w-auto no-scrollbar shrink-0">
             <button
               onClick={() => onSelectCategory('All')}
               className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
