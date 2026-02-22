@@ -97,7 +97,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
                     </div>
                     <i className="fas fa-lock text-2xl text-green-600"></i>
                   </div>
-                  <p className="text-sm text-green-800 mb-4 font-medium">Your payment is processed securely by Stripe. Industry-standard 256-bit encryption protects your information.</p>
+                  <p className="text-sm text-green-800 mb-6 font-medium">Your payment is processed securely by Stripe. Industry-standard 256-bit encryption protects your information.</p>
                   
                   <button
                     type="button"
@@ -108,40 +108,8 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
                     className="w-full bg-green-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-lg"
                   >
                     <i className="fab fa-stripe"></i>
-                    Pay with Stripe ${total.toLocaleString()}
+                    Complete Payment ${total.toLocaleString()}
                   </button>
-
-                  <div className="mt-4 grid grid-cols-3 gap-3 pt-4 border-t border-green-200">
-                    <div className="text-center">
-                      <i className="fab fa-cc-visa text-3xl text-blue-900 block mb-2"></i>
-                      <span className="text-xs font-bold text-gray-600">Visa</span>
-                    </div>
-                    <div className="text-center">
-                      <i className="fab fa-cc-mastercard text-3xl text-red-600 block mb-2"></i>
-                      <span className="text-xs font-bold text-gray-600">Mastercard</span>
-                    </div>
-                    <div className="text-center">
-                      <i className="fab fa-cc-amex text-3xl text-blue-600 block mb-2"></i>
-                      <span className="text-xs font-bold text-gray-600">Amex</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Alternative Payment Methods (Demo) */}
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-gray-600 uppercase">Other Payment Options (Test Only)</label>
-                  <div className="p-4 border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition">
-                    <div className="flex items-center gap-3">
-                      <i className="fab fa-apple text-2xl text-gray-900"></i>
-                      <span className="font-bold text-gray-900">Apple Pay</span>
-                    </div>
-                  </div>
-                  <div className="p-4 border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition">
-                    <div className="flex items-center gap-3">
-                      <i className="fab fa-google text-2xl text-blue-600"></i>
-                      <span className="font-bold text-gray-900">Google Pay</span>
-                    </div>
-                  </div>
                 </div>
 
                 <button 
