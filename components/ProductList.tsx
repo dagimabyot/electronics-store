@@ -24,8 +24,8 @@ const ProductList: React.FC<ProductListProps> = ({ products, addToCart, selected
       <section className="relative h-[500px] md:h-[600px] rounded-[40px] overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent z-10" />
         <img 
-          src="https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=2000" 
-          alt="Tech Hero Banner" 
+          src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=2000" 
+          alt="Premium Electronics Hero Banner" 
           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
         />
         <div className="relative z-20 h-full flex flex-col justify-center px-8 md:px-20 max-w-4xl">
