@@ -1,4 +1,5 @@
 -- Safe Migration Script - Only creates what doesn't exist
+-- Fixed: Using correct column name casing (userId with capital U)
 
 -- Step 1: Create profiles table if it doesn't exist
 CREATE TABLE IF NOT EXISTS profiles (
@@ -34,7 +35,7 @@ CREATE POLICY "Enable insert for authenticated users"
 -- Step 4: Create orders table if it doesn't exist
 CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY,
-  userId UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  "userId" UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Paid', 'Shipped', 'Delivered')),
   total DECIMAL(10, 2) NOT NULL,
   items JSONB NOT NULL,
@@ -50,7 +51,7 @@ DROP POLICY IF EXISTS "Users can see their own orders" ON orders;
 CREATE POLICY "Users can see their own orders"
   ON orders
   FOR SELECT
-  USING (auth.uid() = userId);
+  USING (auth.uid() = "userId");
 
 -- Step 7: Create products table if it doesn't exist
 CREATE TABLE IF NOT EXISTS products (
@@ -69,6 +70,6 @@ CREATE TABLE IF NOT EXISTS products (
 -- Step 8: Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
-CREATE INDEX IF NOT EXISTS idx_orders_userId ON orders(userId);
+CREATE INDEX IF NOT EXISTS idx_orders_userId ON orders("userId");
 
--- Done! Tables and policies are now ready.
+-- Done! All tables and policies are ready.
