@@ -59,27 +59,29 @@ const ProductList: React.FC<ProductListProps> = ({ products, addToCart, selected
 
       {/* Catalog Header & Filters */}
       <div ref={catalogRef} className="pt-12 space-y-10">
-        {/* Layout container: flex-row on large screens, items-end to fix alignment */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 border-b border-gray-100 pb-8">
+        
+        {/* THE FIX: This container handles the line-by-line alignment */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 pb-8 border-b border-gray-100">
           
-          <div className="flex-1 min-w-0">
-            {/* whitespace-nowrap prevents the title from breaking into two lines awkwardly */}
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight whitespace-nowrap">
-              Product Catalog
+          {/* Left Side: Title and Subtitle */}
+          <div className="flex flex-col space-y-1">
+            <h2 className="text-5xl font-black text-gray-900 tracking-tight leading-tight">
+              Product <br /> Catalog
             </h2>
-            <p className="text-gray-500 text-lg mt-2 max-w-md">
+            <p className="text-gray-500 text-lg font-medium max-w-[200px] leading-snug">
               Premium electronics curated for excellence
             </p>
           </div>
           
-          <div className="w-full lg:w-auto">
+          {/* Right Side: Category Buttons */}
+          <div className="w-full md:w-auto">
             <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar shrink-0">
               <button
                 onClick={() => onSelectCategory('All')}
                 className={`px-7 py-3.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${
                   selectedCategory === 'All' 
-                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 -translate-y-1' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-200' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-100'
                 }`}
               >
                 All Products
@@ -90,8 +92,8 @@ const ProductList: React.FC<ProductListProps> = ({ products, addToCart, selected
                   onClick={() => onSelectCategory(cat)}
                   className={`px-7 py-3.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${
                     selectedCategory === cat 
-                    ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 -translate-y-1' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-blue-600 text-white shadow-xl shadow-blue-200' 
+                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-100'
                   }`}
                 >
                   {cat}
