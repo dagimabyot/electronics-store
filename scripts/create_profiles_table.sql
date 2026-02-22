@@ -19,19 +19,19 @@ DROP POLICY IF EXISTS "Enable insert for authenticated users" ON profiles;
 CREATE POLICY "Users can see their own profile"
   ON profiles
   FOR SELECT
-  USING (auth.uid() = id);
+  USING (auth.uid()::uuid = id);
 
 -- Create RLS policy - users can update their own profile
 CREATE POLICY "Users can update their own profile"
   ON profiles
   FOR UPDATE
-  USING (auth.uid() = id);
+  USING (auth.uid()::uuid = id);
 
 -- Create RLS policy - allow inserts during signup
 CREATE POLICY "Enable insert for authenticated users"
   ON profiles
   FOR INSERT
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK (auth.uid()::uuid = id);
 
 -- Create trigger to automatically update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -71,7 +71,7 @@ DROP POLICY IF EXISTS "Users can see their own orders" ON orders;
 CREATE POLICY "Users can see their own orders"
   ON orders
   FOR SELECT
-  USING (auth.uid() = "userId");
+  USING (auth.uid()::uuid = "userId");
 
 -- Create index on userId for faster lookups
 CREATE INDEX IF NOT EXISTS idx_orders_userId ON orders("userId");

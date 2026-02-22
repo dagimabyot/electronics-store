@@ -18,19 +18,19 @@ DROP POLICY IF EXISTS "Users can see their own profile" ON profiles;
 CREATE POLICY "Users can see their own profile"
   ON profiles
   FOR SELECT
-  USING (auth.uid() = id);
+  USING (auth.uid()::uuid = id);
 
 DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
 CREATE POLICY "Users can update their own profile"
   ON profiles
   FOR UPDATE
-  USING (auth.uid() = id);
+  USING (auth.uid()::uuid = id);
 
 DROP POLICY IF EXISTS "Enable insert for authenticated users" ON profiles;
 CREATE POLICY "Enable insert for authenticated users"
   ON profiles
   FOR INSERT
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK (auth.uid()::uuid = id);
 
 -- Step 4: Create orders table if it doesn't exist
 CREATE TABLE IF NOT EXISTS orders (
@@ -51,7 +51,7 @@ DROP POLICY IF EXISTS "Users can see their own orders" ON orders;
 CREATE POLICY "Users can see their own orders"
   ON orders
   FOR SELECT
-  USING (auth.uid() = "userId");
+  USING (auth.uid()::uuid = "userId");
 
 -- Step 7: Create products table if it doesn't exist
 CREATE TABLE IF NOT EXISTS products (
