@@ -36,19 +36,10 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
       return;
     }
     
-    // Step 2 - Process payment
+    // Step 2 - Redirect to Stripe payment
     setProcessing(true);
-    console.log("[v0] Redirecting to Stripe...", STRIPE_CHECKOUT_URL);
-    
-    // Use setTimeout to ensure UI updates before redirect
-    setTimeout(() => {
-      window.open(STRIPE_CHECKOUT_URL, '_blank');
-      setProcessing(false);
-      // Close modal after 1 second
-      setTimeout(() => {
-        window.history.back();
-      }, 1000);
-    }, 500);
+    // Redirect directly to Stripe checkout
+    window.location.href = STRIPE_CHECKOUT_URL;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
