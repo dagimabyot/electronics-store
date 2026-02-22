@@ -28,20 +28,14 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (step === 1) {
+      // Validate shipping info
+      if (!formData.name || !formData.email || !formData.address || !formData.city || !formData.zip) {
+        alert('Please fill in all shipping details');
+        return;
+      }
       setStep(2);
       return;
     }
-    
-    setProcessing(true);
-    // Simulate payment processing
-    setTimeout(() => {
-      onCheckout({
-        status: OrderStatus.PAID,
-        shippingAddress: `${formData.address}, ${formData.city}, ${formData.zip}`
-      });
-      setProcessing(false);
-      navigate('/orders');
-    }, 2500);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,29 +86,64 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
               </div>
             ) : (
               <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6 animate-fadeIn">
-                <h2 className="text-2xl font-black text-gray-900 mb-6">Payment Method</h2>
-                <div className="p-6 border-2 border-blue-600 rounded-2xl bg-blue-50 mb-6">
+                <h2 className="text-2xl font-black text-gray-900 mb-6">Secure Payment</h2>
+                
+                {/* Stripe Payment Info */}
+                <div className="p-6 border-2 border-green-600 rounded-2xl bg-green-50 mb-6">
                   <div className="flex items-center justify-between mb-4">
-                    <i className="fab fa-cc-visa text-3xl text-blue-900"></i>
-                    <i className="fab fa-cc-mastercard text-3xl text-blue-400"></i>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-[10px] font-bold text-blue-600 uppercase mb-1 block">Card Number</label>
-                      <input required name="cardNumber" value={formData.cardNumber} onChange={handleInputChange} className="w-full bg-white border-blue-100 p-4 rounded-xl outline-none focus:border-blue-500 transition" placeholder="4444 4444 4444 4444" />
+                    <div className="flex items-center gap-2">
+                      <i className="fab fa-cc-stripe text-3xl text-green-700"></i>
+                      <span className="font-bold text-green-900">Secure Stripe Payment</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-[10px] font-bold text-blue-600 uppercase mb-1 block">Expiry Date</label>
-                        <input required name="expiry" value={formData.expiry} onChange={handleInputChange} className="w-full bg-white border-blue-100 p-4 rounded-xl outline-none focus:border-blue-500 transition" placeholder="MM/YY" />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-blue-600 uppercase mb-1 block">CVV</label>
-                        <input required name="cvv" value={formData.cvv} onChange={handleInputChange} className="w-full bg-white border-blue-100 p-4 rounded-xl outline-none focus:border-blue-500 transition" placeholder="123" />
-                      </div>
+                    <i className="fas fa-lock text-2xl text-green-600"></i>
+                  </div>
+                  <p className="text-sm text-green-800 mb-4 font-medium">Your payment is processed securely by Stripe. Industry-standard 256-bit encryption protects your information.</p>
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Redirect to Stripe Checkout Link
+                      window.location.href = 'https://buy.stripe.com/test_dRm5kx3secSceRx01x6Zy00';
+                    }}
+                    className="w-full bg-green-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-lg"
+                  >
+                    <i className="fab fa-stripe"></i>
+                    Pay with Stripe ${total.toLocaleString()}
+                  </button>
+
+                  <div className="mt-4 grid grid-cols-3 gap-3 pt-4 border-t border-green-200">
+                    <div className="text-center">
+                      <i className="fab fa-cc-visa text-3xl text-blue-900 block mb-2"></i>
+                      <span className="text-xs font-bold text-gray-600">Visa</span>
+                    </div>
+                    <div className="text-center">
+                      <i className="fab fa-cc-mastercard text-3xl text-red-600 block mb-2"></i>
+                      <span className="text-xs font-bold text-gray-600">Mastercard</span>
+                    </div>
+                    <div className="text-center">
+                      <i className="fab fa-cc-amex text-3xl text-blue-600 block mb-2"></i>
+                      <span className="text-xs font-bold text-gray-600">Amex</span>
                     </div>
                   </div>
                 </div>
+
+                {/* Alternative Payment Methods (Demo) */}
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-gray-600 uppercase">Other Payment Options (Test Only)</label>
+                  <div className="p-4 border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition">
+                    <div className="flex items-center gap-3">
+                      <i className="fab fa-apple text-2xl text-gray-900"></i>
+                      <span className="font-bold text-gray-900">Apple Pay</span>
+                    </div>
+                  </div>
+                  <div className="p-4 border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition">
+                    <div className="flex items-center gap-3">
+                      <i className="fab fa-google text-2xl text-blue-600"></i>
+                      <span className="font-bold text-gray-900">Google Pay</span>
+                    </div>
+                  </div>
+                </div>
+
                 <button 
                   type="button" 
                   onClick={() => setStep(1)} 
@@ -125,19 +154,15 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
               </div>
             )}
 
-            <button 
-              type="submit" 
-              disabled={processing}
-              className={`w-full py-5 rounded-2xl font-black text-xl shadow-xl transition-all ${
-                processing ? 'bg-gray-400 cursor-wait' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200'
-              }`}
-            >
-              {processing ? (
-                <span className="flex items-center justify-center">
-                  <i className="fas fa-circle-notch fa-spin mr-3"></i> Processing Securely...
-                </span>
-              ) : step === 1 ? 'Continue to Payment' : `Pay $${total.toLocaleString()}`}
-            </button>
+            {step === 1 && (
+              <button 
+                type="submit"
+                className="w-full py-5 rounded-2xl font-black text-xl shadow-xl transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200 flex items-center justify-center gap-2"
+              >
+                <i className="fas fa-chevron-right"></i>
+                Continue to Payment
+              </button>
+            )}
           </form>
         </div>
 
