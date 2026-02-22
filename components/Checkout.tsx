@@ -27,13 +27,28 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (step === 1) {
+      // Validate shipping details before proceeding
+      if (!formData.name || !formData.address || !formData.city || !formData.zip) {
+        alert('Please fill in all shipping details');
+        return;
+      }
       setStep(2);
       return;
     }
     
+    // Step 2 - Process payment
     setProcessing(true);
-    // Redirect to Stripe payment
-    window.location.href = STRIPE_CHECKOUT_URL;
+    console.log("[v0] Redirecting to Stripe...", STRIPE_CHECKOUT_URL);
+    
+    // Use setTimeout to ensure UI updates before redirect
+    setTimeout(() => {
+      window.open(STRIPE_CHECKOUT_URL, '_blank');
+      setProcessing(false);
+      // Close modal after 1 second
+      setTimeout(() => {
+        window.history.back();
+      }, 1000);
+    }, 500);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
