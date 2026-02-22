@@ -11,6 +11,11 @@ CREATE TABLE IF NOT EXISTS profiles (
 -- Enable Row Level Security
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can see their own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON profiles;
+
 -- Create RLS policy - users can only see their own profile
 CREATE POLICY "Users can see their own profile"
   ON profiles
@@ -60,6 +65,9 @@ CREATE TABLE IF NOT EXISTS orders (
 
 -- Enable RLS on orders
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policy if it exists
+DROP POLICY IF EXISTS "Users can see their own orders" ON orders;
 
 -- Create RLS policy for orders
 CREATE POLICY "Users can see their own orders"
