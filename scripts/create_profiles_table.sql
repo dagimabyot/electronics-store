@@ -1,7 +1,6 @@
 -- Create profiles table if it doesn't exist
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email TEXT UNIQUE NOT NULL,
   name TEXT,
   role TEXT DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -49,8 +48,7 @@ CREATE TRIGGER update_profiles_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Create index on email for faster lookups
-CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
+
 
 -- Create orders table if it doesn't exist
 CREATE TABLE IF NOT EXISTS orders (
