@@ -8,6 +8,8 @@ interface CheckoutProps {
   onCheckout: (o: Omit<Order, 'id' | 'createdAt' | 'userId' | 'items' | 'total'>) => void;
 }
 
+const STRIPE_CHECKOUT_URL = 'https://buy.stripe.com/test_dRm5kx3secSceRx01x6Zy00';
+
 const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -15,10 +17,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
     email: '',
     address: '',
     city: '',
-    zip: '',
-    cardNumber: '',
-    expiry: '',
-    cvv: ''
+    zip: ''
   });
   const [processing, setProcessing] = useState(false);
   const [step, setStep] = useState(1);
@@ -33,15 +32,8 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
     }
     
     setProcessing(true);
-    // Simulate payment processing
-    setTimeout(() => {
-      onCheckout({
-        status: OrderStatus.PAID,
-        shippingAddress: `${formData.address}, ${formData.city}, ${formData.zip}`
-      });
-      setProcessing(false);
-      navigate('/orders');
-    }, 2500);
+    // Redirect to Stripe payment
+    window.location.href = STRIPE_CHECKOUT_URL;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,28 +84,23 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
               </div>
             ) : (
               <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6 animate-fadeIn">
-                <h2 className="text-2xl font-black text-gray-900 mb-6">Payment Method</h2>
-                <div className="p-6 border-2 border-blue-600 rounded-2xl bg-blue-50 mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <i className="fab fa-cc-visa text-3xl text-blue-900"></i>
-                    <i className="fab fa-cc-mastercard text-3xl text-blue-400"></i>
+                <h2 className="text-2xl font-black text-gray-900 mb-6">Review Order</h2>
+                <div className="p-6 border-2 border-green-600 rounded-2xl bg-green-50 mb-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <i className="fas fa-lock text-2xl text-green-600"></i>
+                    <span className="font-bold text-green-900">Secure Payment via Stripe</span>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-[10px] font-bold text-blue-600 uppercase mb-1 block">Card Number</label>
-                      <input required name="cardNumber" value={formData.cardNumber} onChange={handleInputChange} className="w-full bg-white border-blue-100 p-4 rounded-xl outline-none focus:border-blue-500 transition" placeholder="4444 4444 4444 4444" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-[10px] font-bold text-blue-600 uppercase mb-1 block">Expiry Date</label>
-                        <input required name="expiry" value={formData.expiry} onChange={handleInputChange} className="w-full bg-white border-blue-100 p-4 rounded-xl outline-none focus:border-blue-500 transition" placeholder="MM/YY" />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-blue-600 uppercase mb-1 block">CVV</label>
-                        <input required name="cvv" value={formData.cvv} onChange={handleInputChange} className="w-full bg-white border-blue-100 p-4 rounded-xl outline-none focus:border-blue-500 transition" placeholder="123" />
-                      </div>
-                    </div>
-                  </div>
+                  <p className="text-sm text-green-700">
+                    Click "Complete Payment" to securely process your order through Stripe. You'll be redirected to our payment gateway.
+                  </p>
+                </div>
+                <div className="space-y-4 p-4 bg-gray-50 rounded-2xl">
+                  <h3 className="font-bold text-gray-900">Shipping Address:</h3>
+                  <p className="text-gray-700 text-sm">
+                    {formData.name}<br />
+                    {formData.address}<br />
+                    {formData.city}, {formData.zip}
+                  </p>
                 </div>
                 <button 
                   type="button" 
@@ -134,9 +121,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
             >
               {processing ? (
                 <span className="flex items-center justify-center">
-                  <i className="fas fa-circle-notch fa-spin mr-3"></i> Processing Securely...
+                  <i className="fas fa-circle-notch fa-spin mr-3"></i> Redirecting to Stripe...
                 </span>
-              ) : step === 1 ? 'Continue to Payment' : `Pay $${total.toLocaleString()}`}
+              ) : step === 1 ? 'Continue to Review' : `Complete Payment $${total.toLocaleString()}`}
             </button>
           </form>
         </div>
