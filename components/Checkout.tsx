@@ -5,7 +5,7 @@ import { CartItem, Order, OrderStatus } from '../types';
 
 interface CheckoutProps {
   cart: CartItem[];
-  onCheckout: (o: Omit<Order, 'id' | 'createdAt' | 'userId' | 'items' | 'total'>) => void;
+  onCheckout: (o: Omit<Order, 'id' | 'created_at' | 'userId' | 'items' | 'total'>) => Promise<void>;
 }
 
 const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
@@ -25,7 +25,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step === 1) {
       // Validate shipping info
@@ -37,8 +37,19 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
       return;
     }
     if (step === 2) {
-      // Redirect to Stripe Checkout Link
-      window.location.href = 'https://buy.stripe.com/test_dRm5kx3secSceRx01x6Zy00';
+      // Save order to database first
+      setProcessing(true);
+      try {
+        await onCheckout({
+          status: 'Paid',
+          shipping_address: `${formData.name}, ${formData.address}, ${formData.city}, ${formData.zip}`
+        });
+        // Then redirect to Stripe
+        window.location.href = 'https://buy.stripe.com/test_dRm5kx3secSceRx01x6Zy00';
+      } catch (err) {
+        alert('Error saving order. Please try again.');
+        setProcessing(false);
+      }
     }
   };
 
@@ -105,10 +116,20 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
                   
                   <button
                     type="submit"
-                    className="w-full bg-green-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-lg"
+                    disabled={processing}
+                    className="w-full bg-green-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <i className="fab fa-stripe"></i>
-                    Pay with Stripe ${total.toLocaleString()}
+                    {processing ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin"></i>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fab fa-stripe"></i>
+                        Pay with Stripe ${total.toLocaleString()}
+                      </>
+                    )}
                   </button>
 
                   <div className="mt-4 grid grid-cols-3 gap-3 pt-4 border-t border-green-200">

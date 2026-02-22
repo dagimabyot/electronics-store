@@ -194,13 +194,16 @@ const AppContent: React.FC = () => {
                 userId: user.id, 
                 items: [...cart], 
                 total, 
-                status: 'Paid',
-                shipping_address: o.shipping_address || '',
+                status: o.status || 'Paid',
+                shipping_address: o.shipping_address,
                 created_at: new Date().toISOString() 
               };
               setOrders(prev => [newOrder, ...prev]);
               setCart([]);
-              await supabase.from('orders').insert([newOrder]);
+              const { error } = await supabase.from('orders').insert([newOrder]);
+              if (error) {
+                throw new Error(error.message);
+              }
           }} /> : <Navigate to="/" />} />
 
           <Route path="/admin/*" element={
