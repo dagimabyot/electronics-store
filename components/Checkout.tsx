@@ -99,17 +99,14 @@ const Checkout: React.FC<CheckoutProps> = ({ cart, onCheckout }) => {
                   </div>
                   <p className="text-sm text-green-800 mb-6 font-medium">Your payment is processed securely by Stripe. Industry-standard 256-bit encryption protects your information.</p>
                   
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // Redirect to Stripe Checkout Link
-                      window.location.href = 'https://buy.stripe.com/test_dRm5kx3secSceRx01x6Zy00';
-                    }}
-                    className="w-full bg-green-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-lg"
+                  <a
+                    href="https://buy.stripe.com/test_dRm5kx3secSceRx01x6Zy00"
+                    target="_self"
+                    className="w-full bg-green-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-lg no-underline"
                   >
                     <i className="fab fa-stripe"></i>
                     Complete Payment ${total.toLocaleString()}
-                  </button>
+                  </a>
                 </div>
 
                 <button 
