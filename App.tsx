@@ -108,7 +108,7 @@ const AppContent: React.FC = () => {
         ? supabase.from('orders').select('*') 
         : supabase.from('orders').select('*').eq('userId', user.id);
       
-      query.order('createdAt', { ascending: false }).then(({ data: dbOrders }) => {
+      query.order('created_at', { ascending: false }).then(({ data: dbOrders }) => {
         if (dbOrders) setOrders(dbOrders);
       });
     }
@@ -189,7 +189,15 @@ const AppContent: React.FC = () => {
           <Route path="/profile" element={user ? <UserProfile user={user} onUpdateUser={setUser} /> : <Navigate to="/" />} />
           <Route path="/checkout" element={user ? <Checkout cart={cart} onCheckout={async (o) => {
               const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-              const newOrder: Order = { ...o, id: `ORD-${Date.now()}`, userId: user.id, items: [...cart], total, createdAt: new Date().toISOString() };
+              const newOrder: Order = { 
+                id: `ORD-${Date.now()}`, 
+                userId: user.id, 
+                items: [...cart], 
+                total, 
+                status: 'Paid',
+                shipping_address: o.shipping_address || '',
+                created_at: new Date().toISOString() 
+              };
               setOrders(prev => [newOrder, ...prev]);
               setCart([]);
               await supabase.from('orders').insert([newOrder]);
