@@ -20,7 +20,6 @@ export interface Product {
   stock: number;
   description: string;
   specs: Record<string, string>;
-  isFeatured?: boolean;
 }
 
 export interface CartItem extends Product {

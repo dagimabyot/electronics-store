@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import { Product, Category } from '../types';
 import { CATEGORIES } from '../constants';
 import ProductCard from './ProductCard';
-import FeaturedProducts from './FeaturedProducts';
 
 interface ProductListProps {
   products: Product[];
@@ -20,38 +19,6 @@ const ProductList: React.FC<ProductListProps> = ({ products, addToCart, selected
 
   return (
     <div className="space-y-16 animate-fadeIn pb-20">
-      {/* Category Filters - Moved Above Hero */}
-      <div className="pt-8 space-y-6">
-        <div className="space-y-3">
-          <h3 className="text-lg font-black text-gray-900 uppercase tracking-wider">Browse by Category</h3>
-          <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
-            <button
-              onClick={() => onSelectCategory('All')}
-              className={`px-7 py-3.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${
-                selectedCategory === 'All' 
-                ? 'bg-blue-600 text-white shadow-xl shadow-blue-200' 
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              All Products
-            </button>
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => onSelectCategory(cat)}
-                className={`px-7 py-3.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${
-                  selectedCategory === cat 
-                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-200' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Modern Hero Section */}
       <section className="relative h-[500px] md:h-[700px] rounded-[40px] overflow-hidden group shadow-2xl">
         <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/40 to-transparent z-10" />
@@ -91,18 +58,50 @@ const ProductList: React.FC<ProductListProps> = ({ products, addToCart, selected
         </div>
       </section>
 
-      {/* Featured Products Section */}
-      <FeaturedProducts products={products} addToCart={addToCart} />
-
-      {/* Catalog Header */}
+      {/* Catalog Header & Filters */}
       <div ref={catalogRef} className="pt-12 space-y-10">
-        <div className="pb-8 border-b border-gray-100">
-          <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-2">
-            Product Catalog
-          </h2>
-          <p className="text-gray-500 text-lg font-medium">
-            Premium electronics curated for excellence
-          </p>
+        
+        {/* Container: Row layout on medium screens and up */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 pb-8 border-b border-gray-100">
+          
+          {/* Text Section: whitespace-nowrap keeps the text on one line */}
+          <div className="shrink-0">
+            <h2 className="text-4xl font-black text-gray-900 tracking-tight whitespace-nowrap">
+              Product Catalog
+            </h2>
+            <p className="text-gray-500 text-lg font-medium whitespace-nowrap mt-1">
+              Premium electronics curated for excellence
+            </p>
+          </div>
+          
+          {/* Button Section */}
+          <div className="w-full md:w-auto overflow-hidden">
+            <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar shrink-0">
+              <button
+                onClick={() => onSelectCategory('All')}
+                className={`px-7 py-3.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${
+                  selectedCategory === 'All' 
+                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-200' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                All Products
+              </button>
+              {CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => onSelectCategory(cat)}
+                  className={`px-7 py-3.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${
+                    selectedCategory === cat 
+                    ? 'bg-blue-600 text-white shadow-xl shadow-blue-200' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Product Grid */}
