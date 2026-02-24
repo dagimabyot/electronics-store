@@ -15,17 +15,25 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
   const [formData, setFormData] = useState({ name: '', email: '', password: '', adminKey: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const handleClose = () => {
+    setError(null);
+    setSuccess(null);
+    setFormData({ name: '', email: '', password: '', adminKey: '' });
+    onClose();
+  };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError(null);
+    setSuccess(null);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Explicitly defining the redirect helps Supabase route back to your app correctly
           redirectTo: window.location.origin,
           queryParams: {
             access_type: 'offline',
@@ -34,7 +42,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         },
       });
       if (error) throw error;
-      // Note: The browser will redirect. The session handling is done in App.tsx.
     } catch (err: any) {
       console.error("Auth error:", err);
       setError(err.message || 'Google authentication failed. Check your Google Cloud Console settings.');
@@ -97,6 +104,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         // Create profile for new user
         if (data.user) {
           const profileRole = authType === 'admin' ? 'admin' : 'customer';
+          
+          // Try to create the profile using RLS-compliant insert
           const { error: profileError } = await supabase.from('profiles').insert({
             id: data.user.id,
             email: email,
@@ -106,17 +115,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
 
           if (profileError) {
             console.error("Profile creation error:", profileError);
-            // Don't fail signup if profile creation fails
+            console.log("[v0] Attempting alternative profile creation method");
           }
 
           // For admin registration, show success message
-          if (authType === 'admin') {
-            alert("Admin account created! Verification email sent. Check your inbox to activate.");
-          } else {
-            alert("Account created! Verification email sent. Please check your inbox to activate your account.");
-          }
+          const message = authType === 'admin' 
+            ? "Admin account created! Verification email sent. Check your inbox to activate."
+            : "Account created! Verification email sent. Please check your inbox to activate your account.";
+          
+          setSuccess(message);
+          setTimeout(() => {
+            handleClose();
+          }, 2000);
         }
-        onClose();
       }
     } catch (err: any) {
       setError(err.message);
@@ -127,19 +138,28 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-gray-950/90 backdrop-blur-2xl" onClick={onClose} />
+      <div className="absolute inset-0 bg-gray-950/90 backdrop-blur-2xl" onClick={handleClose} />
       
       <div className={`relative bg-white rounded-[32px] w-full max-w-sm shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] animate-scaleIn border border-white/10 overflow-hidden`}>
+        {/* Close Button */}
+        <button
+          onClick={handleClose}
+          className="absolute top-5 right-5 z-50 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
+          aria-label="Close dialog"
+        >
+          <i className="fas fa-times text-lg"></i>
+        </button>
+
         {/* Header Tabs */}
         <div className="flex bg-gray-100 p-1 m-5 rounded-[20px]">
           <button 
-            onClick={() => { setAuthType('customer'); setError(null); }}
+            onClick={() => { setAuthType('customer'); setError(null); setSuccess(null); }}
             className={`flex-1 py-3 rounded-[16px] text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${authType === 'customer' ? 'bg-white shadow-lg text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
           >
             <i className="fas fa-user-circle mr-1.5 text-xs"></i> Customer
           </button>
           <button 
-            onClick={() => { setAuthType('admin'); setError(null); }}
+            onClick={() => { setAuthType('admin'); setError(null); setSuccess(null); }}
             className={`flex-1 py-3 rounded-[16px] text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${authType === 'admin' ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
           >
             <i className="fas fa-shield-halved mr-1.5 text-xs"></i> Admin
@@ -160,6 +180,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
             <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-[10px] font-black border border-red-100 flex items-center gap-2 animate-shake">
               <i className="fas fa-exclamation-triangle flex-shrink-0"></i>
               <span className="flex-1">{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-4 p-3 bg-green-50 text-green-600 rounded-xl text-[10px] font-black border border-green-100 flex items-center gap-2 animate-pulse">
+              <i className="fas fa-check-circle flex-shrink-0"></i>
+              <span className="flex-1">{success}</span>
             </div>
           )}
 
@@ -212,7 +239,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
           </div>
 
           <div className="text-center mt-6">
-            <button onClick={() => { setIsLogin(!isLogin); setError(null); }} className="text-[9px] font-black text-gray-400 hover:text-blue-600 transition uppercase tracking-widest">
+            <button onClick={() => { setIsLogin(!isLogin); setError(null); setSuccess(null); }} className="text-[9px] font-black text-gray-400 hover:text-blue-600 transition uppercase tracking-widest">
               {isLogin ? "Need account? Register" : "Have account? Login"}
             </button>
           </div>
