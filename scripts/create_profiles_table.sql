@@ -1,6 +1,7 @@
 -- Create profiles table if it doesn't exist
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
   name TEXT,
   role TEXT DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -27,7 +28,14 @@ CREATE POLICY "Users can update their own profile"
   FOR UPDATE
   USING (auth.uid() = id);
 
--- Create RLS policy - allow inserts during signup
+-- Create RLS policy - allow inserts from service role (used during signup)
+-- This bypasses the RLS check, allowing the backend to create profiles
+CREATE POLICY "Enable insert from service role"
+  ON profiles
+  FOR INSERT
+  WITH CHECK (true);
+
+-- Alternative: Allow inserts where user is authenticated
 CREATE POLICY "Enable insert for authenticated users"
   ON profiles
   FOR INSERT
