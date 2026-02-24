@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Product, CartItem, User, Order, Category } from './types';
 import { INITIAL_PRODUCTS } from './constants';
 import { supabase } from './services/supabase';
+
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ProductList from './components/ProductList';
@@ -15,21 +15,15 @@ import AdminDashboard from './components/AdminDashboard';
 import OrderHistory from './components/OrderHistory';
 import UserProfile from './components/UserProfile';
 
-
-// Hardcoded list of admin emails
-const ADMIN_EMAILS = ['admin@electra.com', 'admin@example.com', 'test.admin@electra.com','dagim045@gmail.com'];
-
-const isAdminEmail = (email: string): boolean => {
-  return ADMIN_EMAILS.includes(email?.toLowerCase() || '');
-};
+/* ---------------- ADMIN ROUTE ---------------- */
 
 const AdminRoute: React.FC<{ children: React.ReactNode; user: User | null }> = ({ children, user }) => {
-  if (user === null) return null; 
-  if (!isAdminEmail(user.email)) {
-    return <Navigate to="/" replace />;
-  }
+  if (!user) return null;
+  if (user.role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
 };
+
+/* ---------------- APP CONTENT ---------------- */
 
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
@@ -41,13 +35,16 @@ const AppContent: React.FC = () => {
     const saved = localStorage.getItem('electra_cart');
     return saved ? JSON.parse(saved) : [];
   });
+
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
-  
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
+
+  /* -------- HANDLE AUTH SESSION + PROFILE -------- */
 
   const handleUserSession = async (supabaseUser: any) => {
     if (!supabaseUser) {
@@ -55,61 +52,78 @@ const AppContent: React.FC = () => {
       return;
     }
 
-    const email = supabaseUser.email?.toLowerCase() || '';
-    const isAdmin = isAdminEmail(email);
-    
-    const authenticatedUser: User = {
-      id: supabaseUser.id,
-      email: email,
-      name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'User',
-      role: isAdmin ? 'admin' : 'customer'
-    };
+    // Fetch profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', supabaseUser.id)
+      .single();
 
-    setUser(authenticatedUser);
+    // If profile does NOT exist (OAuth first login) → create it
+    if (!profile) {
+      const { data: newProfile } = await supabase
+        .from('profiles')
+        .insert({
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          name: supabaseUser.user_metadata?.name || 'User',
+          role: 'customer',
+        })
+        .select()
+        .single();
+
+      if (!newProfile) return;
+      
+      setUser({
+        id: newProfile.id,
+        email: newProfile.email,
+        name: newProfile.name,
+        role: newProfile.role,
+      });
+      return;
+    }
+
+    // Normal case
+    setUser({
+      id: profile.id,
+      email: profile.email,
+      name: profile.name,
+      role: profile.role,
+    });
   };
+
+  /* ---------------- PRODUCTS ---------------- */
 
   const fetchProducts = async () => {
-    try {
-      const { data: dbProducts, error } = await supabase.from('products').select('*').order('name');
-      if (!error && dbProducts && dbProducts.length > 0) {
-        setProducts(dbProducts);
-      }
-    } catch (err) {
-      console.error('Fetch error:', err);
-    }
+    const { data } = await supabase.from('products').select('*').order('name');
+    if (data && data.length > 0) setProducts(data);
   };
 
+  /* ---------------- EFFECTS ---------------- */
+
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash.includes('error_description')) {
-      const params = new URLSearchParams(hash.substring(1));
-      const errorMsg = params.get('error_description');
-      if (errorMsg) {
-        alert(`Authentication Error: ${errorMsg.replace(/\+/g, ' ')}`);
-        window.history.replaceState(null, '', window.location.pathname);
-      }
-    }
+    supabase.auth.getSession().then(({ data }) => {
+      handleUserSession(data.session?.user || null);
+    });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       handleUserSession(session?.user || null);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      handleUserSession(session?.user || null);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     fetchProducts();
+
     if (user) {
-      const query = user.role === 'admin' 
-        ? supabase.from('orders').select('*') 
-        : supabase.from('orders').select('*').eq('userId', user.id);
-      
-      query.order('createdAt', { ascending: false }).then(({ data: dbOrders }) => {
-        if (dbOrders) setOrders(dbOrders);
+      const query =
+        user.role === 'admin'
+          ? supabase.from('orders').select('*')
+          : supabase.from('orders').select('*').eq('userId', user.id);
+
+      query.order('createdAt', { ascending: false }).then(({ data }) => {
+        if (data) setOrders(data);
       });
     }
   }, [user]);
@@ -118,25 +132,32 @@ const AppContent: React.FC = () => {
     localStorage.setItem('electra_cart', JSON.stringify(cart));
   }, [cart]);
 
+  /* ---------------- LOGOUT ---------------- */
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
     navigate('/');
   };
 
+  /* ---------------- FILTER ---------------- */
+
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      const match = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                    p.brand.toLowerCase().includes(searchQuery.toLowerCase());
+      const match =
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.brand.toLowerCase().includes(searchQuery.toLowerCase());
       return match && (selectedCategory === 'All' || p.category === selectedCategory);
     });
   }, [products, searchQuery, selectedCategory]);
 
+  /* ---------------- RENDER ---------------- */
+
   return (
-    <div className={`min-h-screen flex flex-col font-sans ${isAdminPath ? 'bg-gray-50' : 'bg-white'}`}>
+    <div className={`min-h-screen flex flex-col ${isAdminPath ? 'bg-gray-50' : 'bg-white'}`}>
       {!isAdminPath && (
-        <Header 
-          user={user} 
+        <Header
+          user={user}
           cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
           onCartClick={() => setIsCartOpen(true)}
           onAuthClick={() => setIsAuthOpen(true)}
@@ -148,81 +169,50 @@ const AppContent: React.FC = () => {
       <main className={`flex-grow ${isAdminPath ? '' : 'container mx-auto px-4 py-8'}`}>
         <Routes>
           <Route path="/" element={
-            user?.role === 'admin' ? (
-              <div className="text-center py-20">
-                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <i className="fas fa-shield-halved text-3xl text-red-600"></i>
-                </div>
-                <h2 className="text-3xl font-black text-gray-900 mb-2">Admin Access Only</h2>
-                <p className="text-gray-500 mb-8 max-w-md mx-auto">You are logged in as an administrator. Use the admin panel to manage products and orders.</p>
-                <Link to="/admin" className="inline-block px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition">Go to Admin Dashboard</Link>
-              </div>
-            ) : (
-              <ProductList 
-                products={filteredProducts} 
-                addToCart={(p) => { 
-                  setCart(prev => { 
-                    const ex = prev.find(i => i.id === p.id); 
-                    return ex ? prev.map(i => i.id === p.id ? {...i, quantity: i.quantity + 1} : i) : [...prev, {...p, quantity: 1}];
-                  }); 
-                  setIsCartOpen(true); 
-                }} 
-                selectedCategory={selectedCategory} 
-                onSelectCategory={setSelectedCategory} 
-              />
-            )
+            user?.role === 'admin'
+              ? <Navigate to="/admin" />
+              : <ProductList
+                  products={filteredProducts}
+                  addToCart={(p) => {
+                    setCart(prev => {
+                      const ex = prev.find(i => i.id === p.id);
+                      return ex
+                        ? prev.map(i => i.id === p.id ? { ...i, quantity: i.quantity + 1 } : i)
+                        : [...prev, { ...p, quantity: 1 }];
+                    });
+                    setIsCartOpen(true);
+                  }}
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory}
+                />
           } />
+
           <Route path="/product/:id" element={
-            user?.role === 'admin' ? (
-              <Navigate to="/" />
-            ) : (
-              <ProductDetail products={products} addToCart={(p) => {
-                setCart(prev => { 
-                  const ex = prev.find(i => i.id === p.id); 
-                  return ex ? prev.map(i => i.id === p.id ? {...i, quantity: i.quantity + 1} : i) : [...prev, {...p, quantity: 1}];
-                }); 
-                setIsCartOpen(true); 
-              }} />
-            )
+            user?.role === 'admin'
+              ? <Navigate to="/" />
+              : <ProductDetail products={products} addToCart={(p) => {
+                  setCart(prev => {
+                    const ex = prev.find(i => i.id === p.id);
+                    return ex
+                      ? prev.map(i => i.id === p.id ? { ...i, quantity: i.quantity + 1 } : i)
+                      : [...prev, { ...p, quantity: 1 }];
+                  });
+                  setIsCartOpen(true);
+                }} />
           } />
+
           <Route path="/orders" element={user ? <OrderHistory orders={orders} /> : <Navigate to="/" />} />
           <Route path="/profile" element={user ? <UserProfile user={user} onUpdateUser={setUser} /> : <Navigate to="/" />} />
-          <Route path="/checkout" element={user ? <Checkout cart={cart} onCheckout={async (o) => {
-              const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-              const newOrder: Order = { ...o, id: `ORD-${Date.now()}`, userId: user.id, items: [...cart], total, createdAt: new Date().toISOString() };
-              setOrders(prev => [newOrder, ...prev]);
-              setCart([]);
-              await supabase.from('orders').insert([newOrder]);
-          }} /> : <Navigate to="/" />} />
 
           <Route path="/admin/*" element={
             <AdminRoute user={user}>
-              <div className="flex h-screen overflow-hidden bg-white">
-                <aside className="w-80 bg-gray-950 text-white flex flex-col shadow-2xl relative z-20">
-                  <div className="p-10 flex items-center gap-4 border-b border-white/5">
-                    <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                      <i className="fas fa-microchip text-xl"></i>
-                    </div>
-                    <span className="text-xl font-black tracking-tighter uppercase">Electra <span className="text-blue-500 block text-[9px] tracking-[0.3em]">OS v2.5</span></span>
-                  </div>
-                  <nav className="flex-grow p-8 space-y-3">
-                    <Link to="/admin" className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl text-xs font-black uppercase tracking-widest text-blue-400 border border-white/5">
-                      <i className="fas fa-chart-line"></i> Dashboard
-                    </Link>
-                    <Link to="/" className="flex items-center gap-4 p-4 text-gray-500 hover:text-white transition-all text-xs font-black uppercase tracking-widest">
-                      <i className="fas fa-store"></i> Live Store
-                    </Link>
-                  </nav>
-                  <div className="p-8 border-t border-white/5">
-                    <button onClick={handleLogout} className="w-full flex items-center gap-4 p-4 bg-red-500/10 text-red-400 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">
-                      <i className="fas fa-power-off"></i> Terminate Session
-                    </button>
-                  </div>
-                </aside>
-                <div className="flex-1 overflow-y-auto bg-gray-50/50 p-12">
-                  <AdminDashboard products={products} setProducts={setProducts} orders={orders} setOrders={setOrders} onRefreshProducts={fetchProducts} />
-                </div>
-              </div>
+              <AdminDashboard
+                products={products}
+                setProducts={setProducts}
+                orders={orders}
+                setOrders={setOrders}
+                onRefreshProducts={fetchProducts}
+              />
             </AdminRoute>
           } />
         </Routes>
@@ -230,18 +220,20 @@ const AppContent: React.FC = () => {
 
       {!isAdminPath && <Footer />}
 
-      <CartSidebar 
-        isOpen={isCartOpen} 
-        onClose={() => setIsCartOpen(false)} 
-        cart={cart} 
-        onUpdateQuantity={(id, q) => setCart(prev => prev.map(i => i.id === id ? {...i, quantity: Math.max(1, q)} : i))} 
-        onRemove={(id) => setCart(prev => prev.filter(i => i.id !== id))} 
-        onCheckout={() => setIsCartOpen(false)} 
+      <CartSidebar
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cart={cart}
+        onUpdateQuantity={(id, q) =>
+          setCart(prev => prev.map(i => i.id === id ? { ...i, quantity: Math.max(1, q) } : i))
+        }
+        onRemove={(id) => setCart(prev => prev.filter(i => i.id !== id))}
+        onCheckout={() => setIsCartOpen(false)}
       />
-      
-      <AuthModal 
-        isOpen={isAuthOpen} 
-        onClose={() => setIsAuthOpen(false)} 
+
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
         onUserLogin={(u) => {
           setUser(u);
           if (u.role === 'admin') navigate('/admin');
@@ -250,6 +242,8 @@ const AppContent: React.FC = () => {
     </div>
   );
 };
+
+/* ---------------- APP WRAPPER ---------------- */
 
 const App: React.FC = () => (
   <HashRouter>
