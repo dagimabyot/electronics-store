@@ -105,17 +105,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
         if (data.user) {
           const profileRole = authType === 'admin' ? 'admin' : 'customer';
           
-          // Try to create the profile using RLS-compliant insert
-          const { error: profileError } = await supabase.from('profiles').insert({
-            id: data.user.id,
-            email: email,
-            name: formData.name,
-            role: profileRole
-          });
+          console.log("[v0] Attempting to create profile for user:", data.user.id);
+          
+          // Try upsert instead of insert - this may have better RLS handling
+          const { error: profileError, data: profileData } = await supabase
+            .from('profiles')
+            .upsert({
+              id: data.user.id,
+              email: email,
+              name: formData.name,
+              role: profileRole,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'id' });
 
           if (profileError) {
-            console.error("Profile creation error:", profileError);
-            console.log("[v0] Attempting alternative profile creation method");
+            console.error("[v0] Profile creation error:", profileError);
+            console.log("[v0] Error details:", {
+              message: profileError.message,
+              details: profileError.details,
+              hint: profileError.hint
+            });
+          } else {
+            console.log("[v0] Profile created successfully:", profileData);
           }
 
           // For admin registration, show success message
