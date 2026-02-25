@@ -182,133 +182,201 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex h-screen overflow-hidden bg-white">
-      {/* Left Side - Form */}
-      <div className="w-full md:w-1/2 flex flex-col overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex h-screen overflow-hidden bg-f3f4f6">
+      {/* LEFT Side - Background Image Panel */}
+      <div 
+        className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center"
+        style={{
+          backgroundImage: `url('${getBackgroundImage()}')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-black/40"></div>
+        
+        {/* Content */}
+        <div className="relative z-10 text-center text-white px-12 max-w-md">
+          <div className="mb-8 flex justify-center">
+            <div className={`w-28 h-28 rounded-3xl flex items-center justify-center shadow-2xl ${
+              authType === 'admin' 
+                ? 'bg-emerald-400' 
+                : 'bg-cyan-400'
+            }`}>
+              <i className={`text-5xl ${
+                authType === 'admin' 
+                  ? 'fas fa-lock text-slate-900' 
+                  : 'fas fa-bolt text-blue-600'
+              }`}></i>
+            </div>
+          </div>
+          
+          <h2 className="text-4xl font-black mb-4 tracking-tight">
+            {backgroundLabel.title}
+          </h2>
+          <p className="text-slate-100 mb-8 text-lg leading-relaxed font-medium">
+            {authType === 'admin' 
+              ? '"Bank-level encryption, advanced monitoring, and complete control over your platform."'
+              : '"Lightning-fast checkout, zero fraud, enterprise-grade security at every step."'
+            }
+          </p>
+          
+          <div className="flex flex-col gap-4 pt-6 border-t border-white/20">
+            <div className="flex items-center justify-center gap-3">
+              <i className={`text-2xl ${authType === 'admin' ? 'fas fa-shield-alt text-emerald-400' : 'fas fa-zap text-cyan-400'}`}></i>
+              <span className="font-bold">{authType === 'admin' ? 'Secure Systems' : 'Ultra-Fast'}</span>
+            </div>
+            <div className="flex items-center justify-center gap-3">
+              <i className={`text-2xl ${authType === 'admin' ? 'fas fa-chart-line text-emerald-400' : 'fas fa-check-circle text-cyan-400'}`}></i>
+              <span className="font-bold">{authType === 'admin' ? 'Real-Time Analytics' : 'Instant Processing'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT Side - Form Panel */}
+      <div className="w-full lg:w-1/2 flex flex-col overflow-y-auto bg-white">
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="absolute top-6 left-6 z-50 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+          className="absolute top-6 right-6 z-50 w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
           aria-label="Close dialog"
         >
-          <i className="fas fa-arrow-left text-lg"></i>
+          <i className="fas fa-times text-xl"></i>
         </button>
 
-        <div className="flex-1 flex flex-col justify-center px-8 md:px-12 py-12">
+        <div className="flex-1 flex flex-col justify-center px-8 lg:px-12 py-12">
           <div className="max-w-sm mx-auto w-full">
-            {/* Header */}
-            <div className="mb-10">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-zap text-white"></i>
+            {/* Branding */}
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <i className="fas fa-bolt text-white text-lg"></i>
                 </div>
-                <span className="text-lg font-black text-gray-900">Electra</span>
+                <span className="text-2xl font-black bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">Electra</span>
               </div>
               
-              <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-2 tracking-tighter">
-                {isLogin ? 'Get started' : 'Join us'}
+              <h1 className="text-5xl font-black text-slate-900 mb-3 tracking-tighter text-balance">
+                {isLogin ? 'Welcome back' : 'Get started'}
               </h1>
-              <p className="text-gray-500 text-sm">
-                {isLogin ? 'absolutely free' : 'for free'}
+              <p className="text-slate-500 text-base font-medium">
+                {isLogin 
+                  ? 'Sign in to access your account' 
+                  : 'Join thousands of trusted users'
+                }
               </p>
             </div>
 
-            {/* Type Selector */}
-            <div className="flex gap-3 mb-8">
+            {/* Type Selector - Distinct Styling */}
+            <div className="grid grid-cols-2 gap-3 mb-10 p-1 bg-slate-100 rounded-xl">
               <button
                 onClick={() => { setAuthType('customer'); setError(null); setSuccess(null); }}
-                className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all ${
+                className={`py-3 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
                   authType === 'customer'
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30 scale-105'
+                    : 'bg-transparent text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <i className="fas fa-user mr-2"></i>Customer
+                <i className="fas fa-user mr-2"></i>
+                <span>Customer</span>
               </button>
               <button
                 onClick={() => { setAuthType('admin'); setError(null); setSuccess(null); }}
-                className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all ${
+                className={`py-3 px-4 rounded-lg font-bold text-sm transition-all duration-300 ${
                   authType === 'admin'
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-slate-900 text-white shadow-lg shadow-emerald-500/30 scale-105 border-2 border-emerald-500/50'
+                    : 'bg-transparent text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <i className="fas fa-shield mr-2"></i>Admin
+                <i className="fas fa-shield mr-2"></i>
+                <span>Admin</span>
               </button>
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-                <p className="text-red-700 font-semibold text-sm">{error}</p>
+              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-xl animate-shake">
+                <p className="text-red-700 font-semibold text-sm flex items-center gap-2">
+                  <i className="fas fa-exclamation-circle"></i>
+                  {error}
+                </p>
               </div>
             )}
 
             {/* Success Message */}
             {success && (
-              <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
-                <p className="text-green-700 font-semibold text-sm">{success}</p>
+              <div className="mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-xl animate-pulse">
+                <p className="text-emerald-700 font-semibold text-sm flex items-center gap-2">
+                  <i className="fas fa-check-circle"></i>
+                  {success}
+                </p>
               </div>
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {!isLogin && (
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Name</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2.5">Full Name</label>
                   <input
                     required
                     type="text"
                     placeholder="Jane Doe"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                    className="w-full px-4 py-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm hover:border-slate-300 transition-colors"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2.5">Email Address</label>
                 <input
                   required
                   type="email"
-                  placeholder="name@company.com"
+                  placeholder="you@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-4 py-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm hover:border-slate-300 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Password</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2.5">Password</label>
                 <input
                   required
                   type="password"
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-4 py-3.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm hover:border-slate-300 transition-colors"
                 />
               </div>
 
               {!isLogin && authType === 'admin' && (
                 <div>
-                  <label className="block text-sm font-bold text-red-600 mb-2">Master Key</label>
+                  <label className="block text-sm font-bold text-emerald-600 mb-2.5">Master Key</label>
                   <input
                     required
                     type="text"
-                    placeholder="Key Required"
+                    placeholder="Enter admin key"
                     value={formData.adminKey}
                     onChange={(e) => setFormData({ ...formData, adminKey: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 font-mono text-red-600"
+                    className="w-full px-4 py-3.5 border-2 border-emerald-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 font-mono text-emerald-700 shadow-sm bg-emerald-50"
                   />
+                  <p className="text-xs text-slate-500 mt-1">Required for admin registration</p>
                 </div>
               )}
 
+              {/* Primary Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 mt-6 flex items-center justify-center gap-2"
+                className={`w-full font-bold py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-60 mt-8 ${
+                  authType === 'admin'
+                    ? 'bg-slate-900 text-white hover:bg-slate-800 active:scale-95'
+                    : 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-700 hover:to-cyan-600 active:scale-95'
+                }`}
               >
                 {loading ? (
                   <>
@@ -316,26 +384,33 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
                     Processing...
                   </>
                 ) : isLogin ? (
-                  'Sign In'
+                  <>
+                    <span>Sign In</span>
+                    <i className="fas fa-arrow-right"></i>
+                  </>
                 ) : (
-                  'Create Account'
+                  <>
+                    <span>Create Account</span>
+                    <i className="fas fa-arrow-right"></i>
+                  </>
                 )}
               </button>
 
+              {/* Google Button */}
               <button
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={loading}
-                className="w-full bg-white border-2 border-gray-300 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-white border-2 border-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50 transition-all hover:border-blue-300 flex items-center justify-center gap-2 shadow-sm"
               >
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
-                Continue with Google
+                <span>Continue with Google</span>
               </button>
             </form>
 
             {/* Toggle */}
-            <div className="text-center mt-8">
-              <p className="text-gray-600 text-sm">
+            <div className="text-center mt-8 pt-6 border-t border-slate-200">
+              <p className="text-slate-600 text-sm">
                 {isLogin ? "Don't have an account? " : 'Already have an account? '}
                 <button
                   onClick={() => {
@@ -343,36 +418,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
                     setError(null);
                     setSuccess(null);
                   }}
-                  className="text-blue-600 font-bold hover:underline"
+                  className="text-blue-600 font-bold hover:text-blue-700 transition-colors"
                 >
                   {isLogin ? 'Sign up' : 'Sign in'}
                 </button>
               </p>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Side - Decorative (Hidden on mobile) */}
-      <div className="hidden md:flex w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-900 items-center justify-center">
-        <GeometricBackground />
-        
-        {/* Content */}
-        <div className="relative z-10 text-center text-white px-12 max-w-sm">
-          <div className="mb-8 flex justify-center">
-            <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center shadow-2xl">
-              <i className="fas fa-check text-4xl text-blue-600"></i>
-            </div>
-          </div>
-          
-          <h2 className="text-3xl font-black mb-4">Secure & Fast</h2>
-          <p className="text-blue-100 mb-8 text-lg leading-relaxed">
-            "Experience lightning-fast checkout and secure transactions with Electra. Your trust is our priority."
-          </p>
-          
-          <div className="flex items-center justify-center gap-2 text-blue-100">
-            <i className="fas fa-shield text-2xl"></i>
-            <span className="font-bold">Enterprise Grade Security</span>
           </div>
         </div>
       </div>
