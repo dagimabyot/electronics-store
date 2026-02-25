@@ -49,3 +49,35 @@ export interface Order {
   createdAt: string;
   shippingAddress: string;
 }
+
+// Authentication types
+export interface Admin {
+  id: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PasswordReset {
+  id: string;
+  email: string;
+  token: string;
+  expiresAt: string;
+  usedAt?: string;
+  createdAt: string;
+}
+
+export interface MasterKeyHistory {
+  id: string;
+  adminId: string;
+  changedByEmail: string;
+  changedAt: string;
+  notes?: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+  errors?: string[];
+}

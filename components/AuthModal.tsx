@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
 import { User } from '../types';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   if (!isOpen) return null;
 
@@ -437,10 +439,28 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
                   {isLogin ? 'Sign up' : 'Sign in'}
                 </button>
               </p>
+              
+              {isLogin && authType === 'customer' && (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      <ForgotPasswordModal
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+        isAdmin={false}
+      />
     </div>
   );
 };
