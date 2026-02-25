@@ -1,6 +1,7 @@
 -- Create profiles table if it doesn't exist
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
   name TEXT,
   role TEXT DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -14,6 +15,7 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can see their own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
 DROP POLICY IF EXISTS "Enable insert for authenticated users" ON profiles;
+DROP POLICY IF EXISTS "Enable insert from service role" ON profiles;
 
 -- Create RLS policy - users can only see their own profile
 CREATE POLICY "Users can see their own profile"
@@ -27,11 +29,12 @@ CREATE POLICY "Users can update their own profile"
   FOR UPDATE
   USING (auth.uid() = id);
 
--- Create RLS policy - allow inserts during signup
-CREATE POLICY "Enable insert for authenticated users"
+-- Create RLS policy - allow inserts (used during signup)
+-- Using true to allow the service role to insert during signup
+CREATE POLICY "Enable insert for signup"
   ON profiles
   FOR INSERT
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK (true);
 
 -- Create trigger to automatically update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
