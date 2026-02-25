@@ -26,6 +26,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
     onClose();
   };
 
+  // Get appropriate background image and messaging based on auth type
+  const getBackgroundImage = () => {
+    return authType === 'admin' ? '/admin-security.jpg' : '/tech-circuit.jpg';
+  };
+
+  const getBackgroundLabel = () => {
+    if (authType === 'admin') {
+      return { title: 'Enterprise Security', subtitle: 'Bank-level encryption & monitoring' };
+    }
+    return { title: 'Fast & Secure', subtitle: 'Lightning-quick checkout, zero compromises' };
+  };
+
+  const backgroundLabel = getBackgroundLabel();
+
   // Animated Geometric Background Component
   const GeometricBackground = () => (
     <div className="absolute inset-0 overflow-hidden">
@@ -182,7 +196,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onUserLogin }) =
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex h-screen overflow-hidden bg-f3f4f6">
+    <div className="fixed inset-0 z-[100] flex h-screen overflow-hidden bg-slate-50">
       {/* LEFT Side - Background Image Panel */}
       <div 
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center"
