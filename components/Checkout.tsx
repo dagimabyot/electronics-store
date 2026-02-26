@@ -7,12 +7,15 @@ interface CheckoutProps {
   onCheckout?: (order: any) => void;
 }
 
+// ✅ Stripe TEST payment link (works)
 const STRIPE_PAYMENT_LINK =
   'https://buy.stripe.com/test_dRm5kx3secSceRx01x6Zy00';
 
-const Checkout = ({ cart, onCheckout }: CheckoutProps) => {
+const Checkout = ({ cart }: CheckoutProps) => {
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal' | 'card'>('stripe');
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal'>(
+    'stripe'
+  );
   const [isProcessing, setIsProcessing] = useState(false);
 
   const total = cart.reduce(
@@ -20,24 +23,28 @@ const Checkout = ({ cart, onCheckout }: CheckoutProps) => {
     0
   );
 
+  // ✅ FIXED STRIPE REDIRECT (NO POPUP, NO BLOCKING)
   const handleStripeCheckout = () => {
+    if (paymentMethod !== 'stripe') return;
+
     setIsProcessing(true);
-    console.log("[v0] Redirecting to Stripe payment gateway...");
-    // Open Stripe payment link in new tab or redirect
-    window.open(STRIPE_PAYMENT_LINK, '_blank') || (window.location.href = STRIPE_PAYMENT_LINK);
+
+    // Redirect safely
+    setTimeout(() => {
+      window.location.href = STRIPE_PAYMENT_LINK;
+    }, 100);
   };
 
+  // EMPTY CART
   if (!cart.length) {
     return (
       <div className="text-center py-20">
-        <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
-          <i className="fas fa-shopping-cart text-4xl text-blue-200"></i>
-        </div>
-        <h2 className="text-3xl font-black text-gray-900 mb-2">Your cart is empty</h2>
-        <p className="text-gray-500 mb-8">Add items to get started with your purchase</p>
+        <h2 className="text-3xl font-black text-gray-900 mb-4">
+          Your cart is empty
+        </h2>
         <button
           onClick={() => navigate('/')}
-          className="inline-block px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-lg"
+          className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700"
         >
           Continue Shopping
         </button>
@@ -46,111 +53,102 @@ const Checkout = ({ cart, onCheckout }: CheckoutProps) => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-8">
-      <h1 className="text-4xl font-black text-gray-900 mb-12">Checkout</h1>
-      
+    <div className="max-w-6xl mx-auto py-10">
+      <h1 className="text-4xl font-black mb-12">Checkout</h1>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* LEFT - Payment Method */}
+        {/* LEFT */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Payment Method Selection */}
-          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-            <h2 className="text-2xl font-black mb-8 text-gray-900">
-              Payment Method
-            </h2>
+          {/* PAYMENT METHOD */}
+          <div className="bg-white p-8 rounded-3xl border shadow-sm">
+            <h2 className="text-2xl font-black mb-6">Payment Method</h2>
 
-            <div className="space-y-4">
-              {/* Stripe Option */}
-              <div
-                onClick={() => setPaymentMethod('stripe')}
-                className={`p-6 rounded-2xl border-2 cursor-pointer transition-all ${
-                  paymentMethod === 'stripe'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+            {/* STRIPE */}
+            <div
+              onClick={() => setPaymentMethod('stripe')}
+              className={`p-6 rounded-2xl border-2 cursor-pointer transition ${
+                paymentMethod === 'stripe'
+                  ? 'border-blue-600 bg-blue-50'
+                  : 'border-gray-200'
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                     paymentMethod === 'stripe'
-                      ? 'border-blue-600 bg-blue-600'
+                      ? 'bg-blue-600 border-blue-600'
                       : 'border-gray-300'
-                  }`}>
-                    {paymentMethod === 'stripe' && (
-                      <i className="fas fa-check text-white text-xs"></i>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-gray-900">Stripe Credit/Debit Card</h3>
-                    <p className="text-sm text-gray-500">Secure payment with Stripe</p>
-                  </div>
-                  <i className="fas fa-credit-card text-2xl text-blue-600"></i>
+                  }`}
+                >
+                  {paymentMethod === 'stripe' && (
+                    <i className="fas fa-check text-white text-xs"></i>
+                  )}
                 </div>
+                <div className="flex-1">
+                  <p className="font-bold">Stripe (Card)</p>
+                  <p className="text-sm text-gray-500">
+                    Secure payment via Stripe
+                  </p>
+                </div>
+                <i className="fas fa-credit-card text-2xl text-blue-600"></i>
               </div>
+            </div>
 
-              {/* PayPal Option */}
+            {/* PAYPAL (DISABLED) */}
+            <div className="mt-4 p-6 rounded-2xl border border-gray-200 opacity-50">
+              <div className="flex items-center gap-4">
+                <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
+                <div className="flex-1">
+                  <p className="font-bold">PayPal</p>
+                  <p className="text-sm text-gray-500">Coming soon</p>
+                </div>
+                <i className="fab fa-paypal text-2xl text-gray-400"></i>
+              </div>
+            </div>
+          </div>
+
+          {/* ORDER ITEMS */}
+          <div className="bg-white p-8 rounded-3xl border shadow-sm">
+            <h2 className="text-2xl font-black mb-6">Order Items</h2>
+
+            {cart.map(item => (
               <div
-                onClick={() => setPaymentMethod('paypal')}
-                className={`p-6 rounded-2xl border-2 cursor-pointer transition-all opacity-50 cursor-not-allowed ${
-                  paymentMethod === 'paypal'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 bg-white'
-                }`}
+                key={item.id}
+                className="flex gap-6 pb-6 mb-6 border-b last:border-0 last:mb-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                    paymentMethod === 'paypal'
-                      ? 'border-blue-600 bg-blue-600'
-                      : 'border-gray-300'
-                  }`}>
+                <img
+                  src={item.images[0]}
+                  alt={item.name}
+                  className="w-24 h-24 rounded-xl object-cover"
+                />
+                <div className="flex-1">
+                  <p className="font-bold">{item.name}</p>
+                  <p className="text-sm text-gray-500">{item.category}</p>
+                  <div className="flex justify-between mt-2">
+                    <span>Qty: {item.quantity}</span>
+                    <span className="font-bold">
+                      ${(item.price * item.quantity).toLocaleString()}
+                    </span>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-gray-900">PayPal</h3>
-                    <p className="text-sm text-gray-500">Coming soon</p>
-                  </div>
-                  <i className="fab fa-paypal text-2xl text-gray-300"></i>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
 
-          {/* Order Items */}
-          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-            <h2 className="text-2xl font-black mb-6 text-gray-900">
-              Order Items
-            </h2>
-
-            <div className="space-y-6">
-              {cart.map((item) => (
-                <div key={item.id} className="flex gap-6 pb-6 border-b border-gray-100 last:border-0 last:pb-0">
-                  <div className="w-24 h-24 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
-                    <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-gray-900 mb-1">{item.name}</h4>
-                    <p className="text-sm text-gray-500 mb-3">{item.category}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
-                      <span className="font-bold text-gray-900">${(item.price * item.quantity).toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Continue Button */}
+          {/* PAY BUTTON */}
           <button
             onClick={handleStripeCheckout}
             disabled={isProcessing || paymentMethod !== 'stripe'}
-            className={`w-full py-5 rounded-2xl font-black text-lg transition-all shadow-lg flex items-center justify-center gap-3 ${
-              paymentMethod === 'stripe' && !isProcessing
-                ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-700 hover:to-cyan-600 active:scale-95'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            className={`w-full py-5 rounded-2xl font-black text-lg flex justify-center items-center gap-3 transition ${
+              !isProcessing
+                ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:opacity-90'
+                : 'bg-gray-400 text-gray-700 cursor-not-allowed'
             }`}
           >
             {isProcessing ? (
               <>
                 <i className="fas fa-spinner fa-spin"></i>
-                Processing...
+                Redirecting...
               </>
             ) : (
               <>
@@ -160,62 +158,51 @@ const Checkout = ({ cart, onCheckout }: CheckoutProps) => {
             )}
           </button>
 
-          <p className="text-center text-sm text-gray-500">
-            <i className="fas fa-shield-alt text-green-600 mr-2"></i>
-            Your payment is secure and encrypted with Stripe
+          <p className="text-center text-sm text-gray-500 mt-2">
+            Secure checkout powered by Stripe
           </p>
         </div>
 
-        {/* RIGHT - Order Summary */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-8 bg-gradient-to-br from-blue-50 to-cyan-50 p-8 rounded-3xl border border-blue-100 shadow-sm">
-            <h3 className="text-2xl font-black mb-8 text-gray-900">
-              Order Summary
-            </h3>
+        {/* RIGHT - SUMMARY */}
+        <div className="bg-blue-50 p-8 rounded-3xl border shadow-sm h-fit sticky top-8">
+          <h3 className="text-2xl font-black mb-6">Order Summary</h3>
 
-            <div className="space-y-4 mb-8 pb-8 border-b border-blue-200">
-              {cart.map(item => (
-                <div
-                  key={item.id}
-                  className="flex justify-between items-center"
-                >
-                  <div>
-                    <p className="font-bold text-gray-900">
-                      {item.name}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      x{item.quantity} @ ${item.price.toLocaleString()}
-                    </p>
-                  </div>
-                  <span className="font-black text-gray-900">
-                    ${(
-                      item.price * item.quantity
-                    ).toLocaleString()}
-                  </span>
-                </div>
-              ))}
+          <div className="space-y-4 mb-6">
+            {cart.map(item => (
+              <div key={item.id} className="flex justify-between">
+                <span>
+                  {item.name} × {item.quantity}
+                </span>
+                <span className="font-bold">
+                  ${(item.price * item.quantity).toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t pt-4 space-y-3">
+            <div className="flex justify-between">
+              <span>Subtotal</span>
+              <span className="font-bold">${total.toLocaleString()}</span>
             </div>
+            <div className="flex justify-between">
+              <span>Shipping</span>
+              <span className="text-green-600 font-bold">Free</span>
+            </div>
+            <div className="flex justify-between text-xl font-black">
+              <span>Total</span>
+              <span className="text-blue-600">
+                ${total.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-            <div className="space-y-4 mb-8">
-              <div className="flex justify-between text-gray-600">
-                <span className="font-medium">Subtotal</span>
-                <span className="font-bold text-gray-900">
-                  ${total.toLocaleString()}
-                </span>
-              </div>
-
-              <div className="flex justify-between text-gray-600">
-                <span className="font-medium">Shipping</span>
-                <span className="text-green-600 font-bold">
-                  Free
-                </span>
-              </div>
-
-              <div className="flex justify-between text-gray-600">
-                <span className="font-medium">Tax</span>
-                <span className="font-bold text-gray-900">
-                  Calculated at checkout
-                </span>
+export default Checkout;                </span>
               </div>
 
               <div className="flex justify-between items-center pt-4 border-t border-blue-200">
