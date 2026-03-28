@@ -1,7 +1,25 @@
-# 🛒 Electronics Store Website
+# 📱 Electronics Store
 
-## Project Description
-The **Electronics Store Website** is a web-based application developed to display and manage electronic products such as smartphones, laptops, accessories, and home appliances. The project focuses on providing a clean, simple, and user-friendly interface that allows users to browse products, view details, and interact with items easily.
+[Live Demo](https://electronics-store-two.vercel.app/)
 
-## Project Explanation
-This project demonstrates the fundamentals of modern web development by combining structured layouts, responsive design, and interactive functionality. It is designed to help users understand how an online electronics store works, from product presentation to basic cart interactions. The website can be expanded in the future with advanced features such as user authentication, payment integration, and an admin dashboard, making it suitable for learning, academic purposes, and portfolio presentation.
+---
+
+## Overview
+**Electronics Store** is a clean, modern, and responsive web application designed to provide users with a seamless online shopping experience. The website showcases a variety of electronic products, allowing users to browse, search, and explore items with ease.
+
+---
+
+## 🚀 Key Features
+- **Browse Products:** Explore a wide range of electronics organized by categories.
+- **Search Functionality:** Quickly find products using the built-in search bar.
+- **Product Details:** Access detailed descriptions and pricing for each item.
+- **Interactive Badges:** Identify products with tags like **New**, **Sale**, or **Best Seller**.
+- **Responsive Design:** Optimized for desktop, tablet, and mobile devices.
+
+---
+
+## 🛠️ Technology Stack
+- **Frontend:** React, JavaScript, HTML, CSS  
+- **Hosting & Deployment:** Vercel  
+
+---
